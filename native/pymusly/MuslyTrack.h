@@ -1,11 +1,15 @@
 #ifndef MUSLY_TRACK_H_
 #define MUSLY_TRACK_H_
 
+
+#include "common.h"
+
 #include <musly/musly_types.h>
 #include <pybind11/pybind11.h>
 #include <utility>
 
-class MuslyTrack
+
+class PYMUSLY_EXPORT MuslyTrack
 {
 public:
     static void

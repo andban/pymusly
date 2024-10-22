@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from ._libmusly import (__doc__,
+from ._pymusly import (__doc__,
                         __version__,
                         musly_version,
                         musly_debug,

@@ -17,7 +17,6 @@ include(GNUInstallDirs)
 # Use -fPIC even if statically compiled
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
-
 set(LIB_INSTALL_DESTINATION "pymusly")
 
 add_subdirectory(libresample)

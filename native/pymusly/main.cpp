@@ -11,7 +11,7 @@
 namespace py = pybind11;
 
 
-PYBIND11_MODULE(_libmusly, m) {
+PYBIND11_MODULE(_pymusly, m) {
     m.doc() = R"pbdoc(
 
     )pbdoc";

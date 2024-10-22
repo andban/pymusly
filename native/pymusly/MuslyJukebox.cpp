@@ -23,14 +23,13 @@ MuslyJukebox::~MuslyJukebox()
         musly_jukebox_poweroff(this->m_jukebox);
         m_jukebox = nullptr;
     }
-    std::cout << "freeing jukebox " << this << std::endl;
 
 }
 
 const char*
 MuslyJukebox::method() const
 {
-    return m_jukebox->method_name;
+    return musly_jukebox_methodname(m_jukebox);
 }
 
 const char*
@@ -42,7 +41,7 @@ MuslyJukebox::method_info() const
 const char*
 MuslyJukebox::decoder() const
 {
-    return m_jukebox->decoder_name;
+    return musly_jukebox_decodername(m_jukebox);
 }
 
 int

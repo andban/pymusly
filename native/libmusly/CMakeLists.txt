@@ -8,8 +8,6 @@ set(MUSLY_VERSION "0.2")
 
 add_definitions(-DMUSLY_VERSION="${MUSLY_VERSION}")
 
-set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
-
 set(SOURCES
     src/kissfft/kiss_fft.c
     src/kissfft/kiss_fftr.c
@@ -29,12 +27,30 @@ set(SOURCES
     src/lib.cpp
 )
 
-find_package(Eigen3 REQUIRED)
+set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
+
+if(NOT TARGET Eigen3::Eigen)
+    set(EIGEN3_INSTALL_PREFIX ${CMAKE_BINARY_DIR}/vendor/eigen3)
+    include(ExternalProject)
+    ExternalProject_Add(eigen3
+        URL      https://gitlab.com/libeigen/eigen/-/archive/3.4.0/eigen-3.4.0.tar.gz
+        URL_HASH SHA256=8586084f71f9bde545ee7fa6d00288b264a2b7ac3607b974e54d13e7162c1c72
+        DOWNLOAD_EXTRACT_TIMESTAMP TRUE
+        PREFIX   ${EIGEN3_INSTALL_PREFIX}
+        CMAKE_ARGS
+            "-DCMAKE_INSTALL_PREFIX=${PROJECT_BINARY_DIR}/vendor"
+        UPDATE_DISCONNECTED 1
+    )
+    add_library(Eigen3::Eigen INTERFACE IMPORTED)
+    set_target_properties(Eigen3::Eigen PROPERTIES
+        INTERFACE_INCLUDE_DIRECTORIES ${CMAKE_BINARY_DIR}/vendor/include/eigen3)
+endif()
+
 
 if(LINUX)
     find_package(LibAV 0.8 COMPONENTS avcodec avformat avutil REQUIRED)
 else()
-    find_package(LibAV 0.8 COMPONENTS avcodec avformat avutil REQUIRED)
+    find_package(LibAV 0.8 COMPONENTS avcodec avformat avutil)
 endif()
 
 if(LIBAV_FOUND)
@@ -61,22 +77,22 @@ endif()
 
 
 add_library(libmusly STATIC ${SOURCES})
-
+install(TARGETS libmusly DESTINATION pymusly)
 
 target_link_libraries(libmusly
     libresample
+    Eigen3::Eigen
     ${ADDITIONAL_LIBRARIES}
 )
-
 
 if(EXISTS "${LIBAV_INCLUDE_DIRS}/libavutil/channel_layout.h")
     set_source_files_properties(decoders/libav.cpp PROPERTIES COMPILE_FLAGS "-DHAVE_AVUTIL_CHANNEL_LAYOUT")
 endif()
 
-set_target_properties(libmusly PROPERTIES COMPILE_FLAGS "-DBUILD_STATIC")
+set_target_properties(libmusly PROPERTIES COMPILE_FLAGS "-DBUILD_STATIC -DMUSLY_BUILDING_LIBRARY")
 
 target_include_directories(libmusly
-    PRIVATE src/ include/ ${EIGEN3_INCLUDE_DIR} ${ADDITIONAL_INCLUDES}
+    PRIVATE src/ include/ Eigen3::Eigen ${ADDITIONAL_INCLUDES}
     INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/include
 )
 

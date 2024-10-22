@@ -1,6 +1,7 @@
 #ifndef MUSLY_JUKEBOX_H_
 #define MUSLY_JUKEBOX_H_
 
+#include "common.h"
 #include "MuslyTrack.h"
 
 #include <pybind11/stl_bind.h>
@@ -11,7 +12,7 @@
 #include <memory>
 
 
-class MuslyJukebox
+class PYMUSLY_EXPORT MuslyJukebox
 {
 public:
     typedef std::vector<MuslyTrack*>    musly_track_vec;
@@ -78,7 +79,7 @@ public:
                        const musly_trackid_vec& track_ids);
 
 private:
-    musly_jukebox* m_jukebox;
+    musly_jukebox m_jukebox;
 };
 
 void
