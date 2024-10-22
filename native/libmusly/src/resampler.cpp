@@ -13,6 +13,9 @@
 
 #include "minilog.h"
 
+#include <algorithm>
+
+
 namespace musly {
 
 resampler::resampler(int input_rate, int output_rate):

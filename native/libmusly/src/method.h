@@ -249,7 +249,7 @@ public:
  * has to be used in the header and class declaration. Call it with the class
  * name as parameter.
  */
-#ifndef BUILD_STATIC
+#ifndef MUSLY_STATIC
 #define MUSLY_METHOD_REGCLASS(classname) \
 private: \
     static const plugin_creator_impl<classname> creator;
@@ -263,7 +263,7 @@ private: \
  * does not request a special musly::method when calling \sa
  * musly_jukebox_poweron(). The method with the highest priority value is used.
  */
-#ifndef BUILD_STATIC
+#ifndef MUSLY_STATIC
 #define MUSLY_METHOD_REGIMPL(classname, priority) \
     const plugin_creator_impl<classname> classname::creator(#classname, \
             plugins::METHOD_TYPE, priority);
@@ -275,7 +275,7 @@ private: \
  * the library. This form has to be placed in global scope in lib.cpp to make
  * the plugin available in static builds.
  */
-#ifdef BUILD_STATIC
+#ifdef MUSLY_STATIC
 #define MUSLY_METHOD_REGSTATIC(classname, priority) \
     static const musly::plugin_creator_impl<musly::methods::classname> \
             create ## _ ## classname (#classname, \

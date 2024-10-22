@@ -18,25 +18,7 @@
  *
  * \sa musly_jukebox_poweron(), musly_jukebox_poweroff()
  */
-typedef struct {
-    /** A reference to the initialized music similarity method. Hides a C++
-     * musly::method object.
-     */
-    void* method;
-
-    /** Method name as null terminated string
-     */
-    char* method_name;
-
-    /** A reference to the initialized audio file decoder. Hides a C++
-     * musly::decoder object.
-     */
-    void* decoder;
-
-    /** Decoder name as null terminated string
-     */
-    char* decoder_name;
-} musly_jukebox;
+typedef struct _musly_jukebox* musly_jukebox;
 
 
 /** A musly_track object typically represents the features extracted with an

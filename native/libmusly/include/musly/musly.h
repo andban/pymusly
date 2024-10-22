@@ -37,15 +37,21 @@ similarity measures. It is our reference implementation.
 #endif
 
 /** \hideinitializer Macro marking the exported symbols of the library */
-#if defined(_WIN32) || defined(__CYGWIN__)
-  #ifdef MUSLY_BUILDING_LIBRARY
-    #define MUSLY_EXPORT __declspec(dllexport)
+
+#if !defined(MUSLY_STATIC)
+  #if defined(_WIN32) || defined(__CYGWIN__)
+    #ifdef MUSLY_BUILDING_LIBRARY
+      #define MUSLY_EXPORT __declspec(dllexport)
+    #else
+      #define MUSLY_EXPORT __declspec(dllimport)
+    #endif
   #else
-    #define MUSLY_EXPORT __declspec(dllimport)
-  #endif
+    #define MUSLY_EXPORT __attribute__ ((visibility("default")))
+  #endif // !_WIN32 || __CYGWIN__
 #else
-  #define MUSLY_EXPORT __attribute__ ((visibility("default")))
-#endif
+  #define MUSLY_EXPORT
+#endif // MUSLY_STATIC
+
 
 #ifdef __cplusplus
 extern "C"
@@ -107,7 +113,15 @@ musly_jukebox_listdecoders();
  */
 MUSLY_EXPORT const char*
 musly_jukebox_aboutmethod(
-        musly_jukebox* jukebox);
+        musly_jukebox jukebox);
+
+MUSLY_EXPORT const char*
+musly_jukebox_methodname(
+        musly_jukebox jukebox);
+
+MUSLY_EXPORT const char*
+musly_jukebox_decodername(
+        musly_jukebox jukebox);
 
 
 /** Returns a reference to an initialized Musly jukebox object. To initialize
@@ -133,7 +147,7 @@ musly_jukebox_aboutmethod(
  * \sa musly_jukebox_poweroff(), musly_jukebox_addtracks(),
  * musly_jukebox_setmusicstyle(), musly_jukebox_similarity()
  */
-MUSLY_EXPORT musly_jukebox*
+MUSLY_EXPORT musly_jukebox
 musly_jukebox_poweron(
         const char* method,
         const char* decoder);
@@ -150,7 +164,7 @@ musly_jukebox_poweron(
  */
 MUSLY_EXPORT void
 musly_jukebox_poweroff(
-        musly_jukebox* jukebox);
+        musly_jukebox jukebox);
 
 
 /** Initialize the jukebox music style. To properly use the similarity
@@ -181,7 +195,7 @@ musly_jukebox_poweroff(
  */
 MUSLY_EXPORT int
 musly_jukebox_setmusicstyle(
-        musly_jukebox* jukebox,
+        musly_jukebox jukebox,
         musly_track** tracks,
         int num_tracks);
 
@@ -217,7 +231,7 @@ musly_jukebox_setmusicstyle(
  */
 MUSLY_EXPORT int
 musly_jukebox_addtracks(
-        musly_jukebox* jukebox,
+        musly_jukebox jukebox,
         musly_track** tracks,
         musly_trackid* trackids,
         int num_tracks,
@@ -237,7 +251,7 @@ musly_jukebox_addtracks(
  */
 MUSLY_EXPORT int
 musly_jukebox_removetracks(
-        musly_jukebox* jukebox,
+        musly_jukebox jukebox,
         musly_trackid* trackids,
         int num_tracks);
 
@@ -254,7 +268,7 @@ musly_jukebox_removetracks(
  */
 MUSLY_EXPORT int
 musly_jukebox_trackcount(
-        musly_jukebox* jukebox);
+        musly_jukebox jukebox);
 
 
 /** Returns the largest track identifier ever registered with the Musly
@@ -271,7 +285,7 @@ musly_jukebox_trackcount(
  */
 MUSLY_EXPORT musly_trackid
 musly_jukebox_maxtrackid(
-        musly_jukebox* jukebox);
+        musly_jukebox jukebox);
 
 
 /** Returns the trackids of all tracks currently registered with the the Musly
@@ -286,7 +300,7 @@ musly_jukebox_maxtrackid(
  */
 MUSLY_EXPORT int
 musly_jukebox_gettrackids(
-        musly_jukebox* jukebox,
+        musly_jukebox jukebox,
         musly_trackid* trackids);
 
 
@@ -331,7 +345,7 @@ musly_jukebox_gettrackids(
  */
 MUSLY_EXPORT int
 musly_jukebox_similarity(
-        musly_jukebox* jukebox,
+        musly_jukebox jukebox,
         musly_track* seed_track,
         musly_trackid seed_trackid,
         musly_track** tracks,
@@ -367,7 +381,7 @@ musly_jukebox_similarity(
  */
 MUSLY_EXPORT int
 musly_jukebox_guessneighbors(
-        musly_jukebox* jukebox,
+        musly_jukebox jukebox,
         musly_trackid seed,
         musly_trackid* neighbors,
         int num_neighbors);
@@ -404,7 +418,7 @@ musly_jukebox_guessneighbors(
  */
 MUSLY_EXPORT int
 musly_jukebox_guessneighbors_filtered(
-        musly_jukebox* jukebox,
+        musly_jukebox jukebox,
         musly_trackid seed,
         musly_trackid* neighbors,
         int num_neighbors,
@@ -432,7 +446,7 @@ musly_jukebox_guessneighbors_filtered(
  */
 MUSLY_EXPORT int
 musly_jukebox_binsize(
-        musly_jukebox* jukebox,
+        musly_jukebox jukebox,
         int header,
         int num_tracks);
 
@@ -467,7 +481,7 @@ musly_jukebox_binsize(
  */
 MUSLY_EXPORT int
 musly_jukebox_tobin(
-        musly_jukebox* jukebox,
+        musly_jukebox jukebox,
         unsigned char* buffer,
         int header,
         int num_tracks,
@@ -504,7 +518,7 @@ musly_jukebox_tobin(
  */
 MUSLY_EXPORT int
 musly_jukebox_frombin(
-        musly_jukebox* jukebox,
+        musly_jukebox jukebox,
         unsigned char* buffer,
         int header,
         int num_tracks);
@@ -530,7 +544,7 @@ musly_jukebox_frombin(
  */
 MUSLY_EXPORT int
 musly_jukebox_tostream(
-        musly_jukebox* jukebox,
+        musly_jukebox jukebox,
         FILE* stream);
 
 
@@ -553,7 +567,7 @@ musly_jukebox_tostream(
  *
  * \sa musly_jukebox_tostream()
  */
-MUSLY_EXPORT musly_jukebox*
+MUSLY_EXPORT musly_jukebox
 musly_jukebox_fromstream(
         FILE* stream);
 #endif  // MUSLY_SUPPORT_STDIO
@@ -571,7 +585,7 @@ musly_jukebox_fromstream(
  */
 MUSLY_EXPORT int
 musly_jukebox_tofile(
-        musly_jukebox* jukebox,
+        musly_jukebox jukebox,
         const char* filename);
 
 
@@ -590,7 +604,7 @@ musly_jukebox_tofile(
  * \note Any additional data in the file following the jukebox state will
  * be ignored, so you can freely append custom data after writing it.
  */
-MUSLY_EXPORT musly_jukebox*
+MUSLY_EXPORT musly_jukebox
 musly_jukebox_fromfile(
         const char* filename);
 
@@ -608,7 +622,7 @@ musly_jukebox_fromfile(
  */
 MUSLY_EXPORT musly_track*
 musly_track_alloc(
-        musly_jukebox* jukebox);
+        musly_jukebox jukebox);
 
 
 /** Frees a musly_track previously allocated with musly_track_alloc().
@@ -638,7 +652,7 @@ musly_track_free(
  */
 MUSLY_EXPORT int
 musly_track_size(
-        musly_jukebox* jukebox);
+        musly_jukebox jukebox);
 
 
 /** Returns the buffer size in bytes required to hold a musly_track. To
@@ -654,7 +668,7 @@ musly_track_size(
  */
 MUSLY_EXPORT int
 musly_track_binsize(
-        musly_jukebox* jukebox);
+        musly_jukebox jukebox);
 
 
 /** Serializes a musly_track to a byte buffer. Use this method to store or
@@ -678,7 +692,7 @@ musly_track_binsize(
  */
 MUSLY_EXPORT int
 musly_track_tobin(
-        musly_jukebox* jukebox,
+        musly_jukebox jukebox,
         musly_track* from_track,
         unsigned char* to_buffer);
 
@@ -703,7 +717,7 @@ musly_track_tobin(
  */
 MUSLY_EXPORT int
 musly_track_frombin(
-        musly_jukebox* jukebox,
+        musly_jukebox jukebox,
         unsigned char* from_buffer,
         musly_track* to_track);
 
@@ -725,7 +739,7 @@ musly_track_frombin(
  */
 MUSLY_EXPORT const char*
 musly_track_tostr(
-        musly_jukebox* jukebox,
+        musly_jukebox jukebox,
         musly_track* from_track);
 
 
@@ -754,7 +768,7 @@ musly_track_tostr(
  */
 MUSLY_EXPORT int
 musly_track_analyze_pcm(
-        musly_jukebox* jukebox,
+        musly_jukebox jukebox,
         float* mono_22khz_pcm,
         int length_pcm,
         musly_track* track);
@@ -796,7 +810,7 @@ musly_track_analyze_pcm(
  */
 MUSLY_EXPORT int
 musly_track_analyze_audiofile(
-        musly_jukebox* jukebox,
+        musly_jukebox jukebox,
         const char* audiofile,
         float excerpt_length,
         float excerpt_start,

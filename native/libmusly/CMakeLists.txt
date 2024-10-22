@@ -71,8 +71,10 @@ if(APPLE)
 endif()
 
 if(WIN32 OR MINGW)
+    set(SOURCES ${SOURCES} src/decoders/mediafoundation.cpp)
+    add_definitions(-DMUSLY_DECODER_MEDIAFOUNDATION -DNOMINMAX -D_USE_MATH_DEFINES)
     # link against winsock2 for ntohl() and htonl()
-    set(ADDITIONAL_LIBRARIES ${ADDITIONAL_LIBRARIES} ws2_32)
+    set(ADDITIONAL_LIBRARIES ${ADDITIONAL_LIBRARIES} ws2_32 Mf Mfplat mfreadwrite mfuuid ole32)
 endif()
 
 
@@ -89,7 +91,7 @@ if(EXISTS "${LIBAV_INCLUDE_DIRS}/libavutil/channel_layout.h")
     set_source_files_properties(decoders/libav.cpp PROPERTIES COMPILE_FLAGS "-DHAVE_AVUTIL_CHANNEL_LAYOUT")
 endif()
 
-set_target_properties(libmusly PROPERTIES COMPILE_FLAGS "-DBUILD_STATIC -DMUSLY_BUILDING_LIBRARY")
+set_target_properties(libmusly PROPERTIES COMPILE_FLAGS "-DMUSLY_STATIC -DMUSLY_BUILDING_LIBRARY")
 
 target_include_directories(libmusly
     PRIVATE src/ include/ Eigen3::Eigen ${ADDITIONAL_INCLUDES}

@@ -12,8 +12,6 @@
 
 #if defined(WIN32) || defined(_WIN32) || defined(__WIN32__)
 #include <winsock2.h>
-typedef u_long uint32_t;
-typedef unsigned char uint8_t;
 #else
 #include <arpa/inet.h>
 #endif
@@ -22,6 +20,7 @@ typedef unsigned char uint8_t;
 #include <sstream>
 #include <cstdio>
 #include <cstring>
+#include <cstdint>
 
 #define MUSLY_SUPPORT_STDIO
 #include "musly/musly.h"
@@ -30,7 +29,7 @@ typedef unsigned char uint8_t;
 #include "decoder.h"
 #include "method.h"
 
-#ifdef BUILD_STATIC
+#ifdef MUSLY_STATIC
 // Implementation note: Each plugin is supposed to register itself with
 // the MUSLY_METHOD_REGIMPL or MUSLY_DECODER_REGIMPL call. These calls
 // are usually placed in the plugin's cpp file, and executed when loading
@@ -54,10 +53,36 @@ MUSLY_DECODER_REGSTATIC(libav, 0);
 MUSLY_DECODER_REGSTATIC(coreaudio, 1);
 #endif // MUSLY_DECODER_COREAUDIO
 
+#if MUSLY_DECODER_MEDIAFOUNDATION
+#include "decoders/mediafoundation.h"
+MUSLY_DECODER_REGSTATIC(mediafoundation, 1);
+#endif // MUSLY_DECODER_MEDIAFOUNDATION
+
 #ifdef LIBMUSLY_EXTERNAL
 #include "external/register_static.h"
 #endif
 #endif
+
+struct _musly_jukebox
+{
+    /** A reference to the initialized music similarity method. Hides a C++
+     * musly::method object.
+     */
+    musly::method* method;
+
+    /** Method name as null terminated string
+     */
+    char* method_name;
+
+    /** A reference to the initialized audio file decoder. Hides a C++
+     * musly::decoder object.
+     */
+    musly::decoder* decoder;
+
+    /** Decoder name as null terminated string
+     */
+    char* decoder_name;
+};
 
 
 const char*
@@ -90,18 +115,38 @@ musly_jukebox_listdecoders()
 
 const char*
 musly_jukebox_aboutmethod(
-        musly_jukebox* jukebox)
+        musly_jukebox jukebox)
 {
     if (jukebox->method) {
-        musly::method* m = reinterpret_cast<musly::method*>(jukebox->method);
-
-        return m->about();
+        return jukebox->method->about();
     }
 
     return "";
 }
 
-musly_jukebox*
+const char*
+musly_jukebox_methodname(
+        musly_jukebox jukebox)
+{
+    if (jukebox->method_name)
+    {
+        return jukebox->method_name;
+    }
+    return "";
+}
+
+const char*
+musly_jukebox_decodername(
+        musly_jukebox jukebox)
+{
+    if (jukebox->decoder_name)
+    {
+        return jukebox->decoder_name;
+    }
+    return "";
+}
+
+musly_jukebox
 musly_jukebox_poweron(
         const char* method,
         const char* decoder)
@@ -113,7 +158,7 @@ musly_jukebox_poweron(
     } else {
         method_str = method;
     }
-    musly::method* m = reinterpret_cast<musly::method*>(
+    musly::method* m = static_cast<musly::method*>(
         musly::plugins::instantiate_plugin(
             musly::plugins::METHOD_TYPE, method_str));
     if (!m) {
@@ -127,7 +172,7 @@ musly_jukebox_poweron(
     } else {
         decoder_str = decoder;
     }
-    musly::decoder* d = reinterpret_cast<musly::decoder*>(
+    musly::decoder* d = static_cast<musly::decoder*>(
             musly::plugins::instantiate_plugin(
                     musly::plugins::DECODER_TYPE, decoder_str));
     if (!d) {
@@ -136,37 +181,37 @@ musly_jukebox_poweron(
     }
 
     // if we succeeded in both, return the jukebox!
-    musly_jukebox* mj = new musly_jukebox;
-    mj->method = reinterpret_cast<void*>(m);
+    musly_jukebox mj = new struct _musly_jukebox;
+    mj->method = m;
     mj->method_name = new char[method_str.size()+1];
     method_str.copy(mj->method_name, method_str.size());
     mj->method_name[method_str.size()] = '\0';
 
-    mj->decoder = reinterpret_cast<void*>(d);
+    mj->decoder = d;
     mj->decoder_name = new char[decoder_str.size()+1];
     decoder_str.copy(mj->decoder_name, decoder_str.size());
     mj->decoder_name[decoder_str.size()] = '\0';
+
     return mj;
 }
 
 void
 musly_jukebox_poweroff(
-        musly_jukebox* jukebox)
+        musly_jukebox jukebox)
 {
     if (!jukebox) {
         return;
     }
+
     if (jukebox->method) {
-        musly::method* m = reinterpret_cast<musly::method*>(jukebox->method);
-        delete m;
+        delete jukebox->method;
     }
     if (jukebox->method_name) {
         delete[] jukebox->method_name;
     }
 
     if (jukebox->decoder) {
-        musly::decoder* d = reinterpret_cast<musly::decoder*>(jukebox->decoder);
-        delete d;
+        delete jukebox->decoder;
     }
     if (jukebox->decoder_name) {
         delete[] jukebox->decoder_name;
@@ -178,7 +223,7 @@ musly_jukebox_poweroff(
 
 int
 musly_jukebox_setmusicstyle(
-        musly_jukebox* jukebox,
+        musly_jukebox jukebox,
         musly_track** tracks,
         int num_tracks)
 {
@@ -192,7 +237,7 @@ musly_jukebox_setmusicstyle(
 
 int
 musly_jukebox_addtracks(
-        musly_jukebox* jukebox,
+        musly_jukebox jukebox,
         musly_track** tracks,
         musly_trackid* trackids,
         int length,
@@ -208,7 +253,7 @@ musly_jukebox_addtracks(
 
 int
 musly_jukebox_removetracks(
-        musly_jukebox* jukebox,
+        musly_jukebox jukebox,
         musly_trackid* trackids,
         int length)
 {
@@ -223,7 +268,7 @@ musly_jukebox_removetracks(
 
 int
 musly_jukebox_trackcount(
-        musly_jukebox* jukebox)
+        musly_jukebox jukebox)
 {
     if (jukebox && jukebox->method) {
         musly::method* m = reinterpret_cast<musly::method*>(jukebox->method);
@@ -235,7 +280,7 @@ musly_jukebox_trackcount(
 
 int
 musly_jukebox_maxtrackid(
-        musly_jukebox* jukebox)
+        musly_jukebox jukebox)
 {
     if (jukebox && jukebox->method) {
         musly::method* m = reinterpret_cast<musly::method*>(jukebox->method);
@@ -247,7 +292,7 @@ musly_jukebox_maxtrackid(
 
 int
 musly_jukebox_gettrackids(
-        musly_jukebox* jukebox,
+        musly_jukebox jukebox,
         musly_trackid* trackids) {
     if (jukebox && jukebox->method) {
         musly::method* m = reinterpret_cast<musly::method*>(jukebox->method);
@@ -259,7 +304,7 @@ musly_jukebox_gettrackids(
 
 int
 musly_jukebox_similarity(
-        musly_jukebox* jukebox,
+        musly_jukebox jukebox,
         musly_track* seed_track,
         musly_trackid seed_trackid,
         musly_track** tracks,
@@ -280,7 +325,7 @@ musly_jukebox_similarity(
 
 int
 musly_jukebox_guessneighbors(
-        musly_jukebox* jukebox,
+        musly_jukebox jukebox,
         musly_trackid seed,
         musly_trackid* neighbors,
         int num_neighbors)
@@ -291,7 +336,7 @@ musly_jukebox_guessneighbors(
 
 int
 musly_jukebox_guessneighbors_filtered(
-        musly_jukebox* jukebox,
+        musly_jukebox jukebox,
         musly_trackid seed,
         musly_trackid* neighbors,
         int num_neighbors,
@@ -308,7 +353,7 @@ musly_jukebox_guessneighbors_filtered(
 
 int
 musly_jukebox_binsize(
-        musly_jukebox* jukebox,
+        musly_jukebox jukebox,
         int header,
         int num_tracks) {
     if (jukebox && jukebox->method) {
@@ -338,7 +383,7 @@ musly_jukebox_binsize(
 
 int
 musly_jukebox_tobin(
-        musly_jukebox* jukebox,
+        musly_jukebox jukebox,
         unsigned char* buffer,
         int header,
         int num_tracks,
@@ -367,7 +412,7 @@ musly_jukebox_tobin(
 
 int
 musly_jukebox_frombin(
-        musly_jukebox* jukebox,
+        musly_jukebox jukebox,
         unsigned char* buffer,
         int header,
         int num_tracks) {
@@ -397,7 +442,7 @@ musly_jukebox_frombin(
 
 int
 musly_jukebox_tostream(
-        musly_jukebox* jukebox,
+        musly_jukebox jukebox,
         FILE* stream) {
     int written = 0;
 
@@ -475,7 +520,7 @@ musly_jukebox_tostream(
     return written;
 }
 
-musly_jukebox*
+musly_jukebox
 musly_jukebox_fromstream(
         FILE* stream) {
     struct {
@@ -519,7 +564,7 @@ musly_jukebox_fromstream(
     }
 
     // create empty jukebox
-    musly_jukebox* jukebox = musly_jukebox_poweron(method.c_str(), decoder.c_str());
+    musly_jukebox jukebox = musly_jukebox_poweron(method.c_str(), decoder.c_str());
     if (!jukebox) {
         return NULL;
     }
@@ -568,7 +613,7 @@ musly_jukebox_fromstream(
 
 int
 musly_jukebox_tofile(
-        musly_jukebox* jukebox,
+        musly_jukebox jukebox,
         const char* filename) {
     if (FILE* f = fopen(filename, "wb")) {
         int result = musly_jukebox_tostream(jukebox, f);
@@ -578,11 +623,11 @@ musly_jukebox_tofile(
     return -1;
 }
 
-musly_jukebox*
+musly_jukebox
 musly_jukebox_fromfile(
         const char* filename) {
     if (FILE* f = fopen(filename, "rb")) {
-        musly_jukebox* result = musly_jukebox_fromstream(f);
+        musly_jukebox result = musly_jukebox_fromstream(f);
         fclose(f);
         return result;
     }
@@ -591,11 +636,10 @@ musly_jukebox_fromfile(
 
 musly_track*
 musly_track_alloc(
-        musly_jukebox* jukebox)
+        musly_jukebox jukebox)
 {
     if (jukebox && jukebox->method) {
-        musly::method* m = reinterpret_cast<musly::method*>(jukebox->method);
-        return m->track_alloc();
+        return jukebox->method->track_alloc();
     } else {
         return NULL;
     }
@@ -612,7 +656,7 @@ musly_track_free(
 
 int
 musly_track_size(
-        musly_jukebox* jukebox)
+        musly_jukebox jukebox)
 {
     if (jukebox && jukebox->method) {
         musly::method* m = reinterpret_cast<musly::method*>(jukebox->method);
@@ -624,14 +668,14 @@ musly_track_size(
 
 int
 musly_track_binsize(
-        musly_jukebox* jukebox)
+        musly_jukebox jukebox)
 {
     return musly_track_size(jukebox);
 }
 
 int
 musly_track_tobin(
-        musly_jukebox* jukebox,
+        musly_jukebox jukebox,
         musly_track* from_track,
         unsigned char* to_buffer)
 {
@@ -662,7 +706,7 @@ musly_track_tobin(
 
 int
 musly_track_frombin(
-        musly_jukebox* jukebox,
+        musly_jukebox jukebox,
         unsigned char* from_buffer,
         musly_track* to_track)
 {
@@ -693,7 +737,7 @@ musly_track_frombin(
 }
 
 const char*
-musly_track_tostr(musly_jukebox* jukebox,
+musly_track_tostr(musly_jukebox jukebox,
         musly_track* from_track)
 {
     if (jukebox && jukebox->method) {
@@ -706,14 +750,13 @@ musly_track_tostr(musly_jukebox* jukebox,
 
 int
 musly_track_analyze_pcm(
-        musly_jukebox* jukebox,
+        musly_jukebox jukebox,
         float* mono_22khz_pcm,
         int length_pcm,
         musly_track* track)
 {
     if (jukebox && jukebox->method) {
-        musly::method* m = reinterpret_cast<musly::method*>(jukebox->method);
-        return m->analyze_track(mono_22khz_pcm, length_pcm, track);
+        return jukebox->method->analyze_track(mono_22khz_pcm, length_pcm, track);
     } else {
         return -1;
     }
@@ -721,7 +764,7 @@ musly_track_analyze_pcm(
 
 int
 musly_track_analyze_audiofile(
-        musly_jukebox* jukebox,
+        musly_jukebox jukebox,
         const char* audiofile,
         float excerpt_length,
         float excerpt_start,
@@ -729,12 +772,9 @@ musly_track_analyze_audiofile(
 {
     if (jukebox && jukebox->decoder) {
 
-        // try decoding the given audio file
-        musly::decoder* d = reinterpret_cast<musly::decoder*>(jukebox->decoder);
-
         // decode the specified excerpt
         std::vector<float> pcm =
-                d->decodeto_22050hz_mono_float(audiofile, excerpt_length, excerpt_start);
+                jukebox->decoder->decodeto_22050hz_mono_float(audiofile, excerpt_length, excerpt_start);
         if (pcm.size() == 0) {
             return -1;
         }
