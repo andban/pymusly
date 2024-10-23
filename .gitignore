@@ -1,6 +1,9 @@
 dist/
 build/
+wheelhouse/
 
 # local stuff
+.envrc
 .direnv/
 .idea/
+.vscode/

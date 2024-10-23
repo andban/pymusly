@@ -1,5 +1,9 @@
 [build-system]
-requires = ["scikit-build-core>=0.10.7", "pybind11"]
+requires = [
+    "scikit-build-core>=0.10.7",
+    "pybind11",
+    "wheel",
+]
 build-backend = "scikit_build_core.build"
 
 [project]
@@ -37,6 +41,29 @@ wheel.expand-macos-universal-tags = true
 wheel.packages = ["src/pymusly"]
 minimum-version = "build-system.requires"
 cmake.source-dir = "native"
+build.verbose= true
+
+[tool.cibuildwheel]
+manylinux-x86_64-image = "manylinux_2_28"
+manylinux-i686-image = "manylinux_2_28"
+manylinux-aarch64-image = "manylinux_2_28"
+manylinux-ppc64le-image = "manylinux_2_28"
+manylinux-pypy_x86_64-image = "manylinux_2_28"
+manylinux-pypy_i686-image = "manylinux_2_28"
+manylinux-pypy_aarch64-image = "manylinux_2_28"
+
+[[tool.cibuildwheel.overrides]]
+select = "*-manylinux*"
+before-build = [
+    "yum install --nogpgcheck https://mirrors.rpmfusion.org/free/el/rpmfusion-free-release-8.noarch.rpm -y",
+    "yum install ffmpeg ffmpeg-devel cmake -y"
+]
+
+[[tool.cibuildwheel.overrides]]
+select = "*-musllinux*"
+before-all = [
+    "apk add ffmpeg-dev cmake"
+]
 
 [tool.pytest.ini_options]
 minversion = 8.0
