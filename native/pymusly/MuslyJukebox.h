@@ -20,6 +20,13 @@ public:
     typedef std::vector<musly_trackid> musly_trackid_vec;
 
 public:
+    static MuslyJukebox*
+    create_from_stream(std::istream& i);
+
+    static void
+    register_class(pybind11::module_& m);
+
+public:
     MuslyJukebox(const char* method = nullptr, const char* decoder = nullptr);
     ~MuslyJukebox();
 
@@ -81,9 +88,6 @@ public:
 
     void
     serialize(std::ostream& o);
-
-    MuslyJukebox*
-    deserialize(std::istream& i);
 
 private:
     musly_jukebox m_jukebox;

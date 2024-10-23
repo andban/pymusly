@@ -1,5 +1,6 @@
 #include "MuslyTrack.h"
 #include "MuslyJukebox.h"
+#include "musly_error.h"
 
 #include <pybind11/pybind11.h>
 #include <musly/musly.h>
@@ -10,17 +11,16 @@
 
 namespace py = pybind11;
 
-
 PYBIND11_MODULE(_pymusly, m) {
     m.doc() = R"pbdoc(
 
     )pbdoc";
 
-    m.def("musly_version", musly_version, R"pbdoc(
+    m.def("get_musly_version", musly_version, R"pbdoc(
         Return the version of Musly.
     )pbdoc");
 
-    m.def("musly_debug", musly_debug, R"pbdoc(
+    m.def("set_musly_log_level", musly_debug, R"pbdoc(
         Set the musly debug level.
 
         Valid levels are 0 (Quiet, DEFAULT), 1 (Error), 2 (Warning), 3 (Info), 4 (Debug), 5 (Trace). All output will be sent to stderr.
@@ -40,6 +40,7 @@ PYBIND11_MODULE(_pymusly, m) {
 
     init_MuslyJukebox(m);
     MuslyTrack::register_class(m);
+    musly_error::register_with_module(m);
 
 #ifdef VERSION_INFO
     m.attr("__version__") = MACRO_STRINGIFY(VERSION_INFO);
