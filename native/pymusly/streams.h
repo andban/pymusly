@@ -1,6 +1,9 @@
 #ifndef PYMUSLY_STREAMS_H_
 #define PYMUSLY_STREAMS_H_
 
+#include <streambuf>
+#include <pybind11/pybind11.h>
+
 class streambuffer : public std::basic_streambuf<char>
 {
 public:

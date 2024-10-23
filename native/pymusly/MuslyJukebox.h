@@ -3,6 +3,7 @@
 
 #include "common.h"
 #include "MuslyTrack.h"
+#include "pystream.h"
 
 #include <pybind11/stl_bind.h>
 #include <pybind11/pybind11.h>
@@ -77,6 +78,12 @@ public:
                        musly_trackid seed_track_id,
                        const musly_track_vec& tracks,
                        const musly_trackid_vec& track_ids);
+
+    void
+    serialize(std::ostream& o);
+
+    MuslyJukebox*
+    deserialize(std::istream& i);
 
 private:
     musly_jukebox m_jukebox;

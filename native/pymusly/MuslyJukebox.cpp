@@ -252,7 +252,7 @@ MuslyJukebox::deserialize_track(py::bytes bytes)
     musly_track* track = musly_track_alloc(m_jukebox);
     if (track == nullptr)
     {
-        throw std::runtime_error("could not allocate track");
+        throw std::runtime_error("pymusly: could not allocate track");
     }
 
     int ret = musly_track_frombin(m_jukebox, reinterpret_cast<unsigned char*>(bytes.ptr()), track);
@@ -262,6 +262,158 @@ MuslyJukebox::deserialize_track(py::bytes bytes)
     }
 
     return new MuslyTrack(track);
+}
+/*
+py::bytes
+MuslyJukebox::searialize_header()
+{
+    int header_size = musly_jukebox_binsize(m_jukebox, 1, 0);
+    if (header_size < 0)
+    {
+        throw std::runtime_error("pymusly: could not get jukebox header size");
+    }
+
+    char* bytes = new char[header_size];
+
+    int bytes_written = musly_jukebox_tobin(m_jukebox, bytes, 1, 0, 0);
+    if (bytes_written < 0)
+    {
+        delete [] bytes;
+        throw std::runtime_error("pymusly: could not serialize jukebox header");
+    }
+
+    return py::bytes(bytes, bytes_written);
+}
+*/
+void
+MuslyJukebox::serialize(std::ostream& o)
+{
+    int header_size = musly_jukebox_binsize(m_jukebox, 1, 0);
+    if (header_size < 0)
+    {
+        throw std::runtime_error("pymusly: could not get jukebox header size");
+    }
+
+    unsigned char* bytes = new unsigned char[header_size];
+
+    int bytes_written = musly_jukebox_tobin(m_jukebox, bytes, 1, 0, 0);
+    if (bytes_written < 0)
+    {
+        delete [] bytes;
+        throw std::runtime_error("pymusly: could not serialize jukebox header");
+    }
+
+    o 
+        << musly_version() << '\0'
+        << (uint8_t) sizeof(uint32_t);
+        
+    uint32_t endian = (uint32_t)0x01020304;
+    o.write(reinterpret_cast<const char*>(&endian), 4);
+    o
+        << method() << '\0'
+        << decoder() << '\0';
+
+    o.write(reinterpret_cast<const char*>(&header_size), 4);
+    o.write(reinterpret_cast<const char*>(bytes), header_size);
+    delete [] bytes;
+
+    const int tracks_per_chunk = 100;
+    int tracks_to_write = track_count();
+
+    bytes = new unsigned char[track_size() * tracks_per_chunk];
+
+    int tracks_written = 0;
+    while (tracks_written < track_count())
+    {
+        tracks_to_write = std::min(tracks_per_chunk, track_count() - tracks_written);
+        bytes_written = musly_jukebox_tobin(m_jukebox, bytes, 0, tracks_to_write, tracks_written);
+        if (bytes_written < 0)
+        {
+            delete [] bytes;
+            throw std::runtime_error("failed to write data into buffer");    
+        }
+        o.write(reinterpret_cast<const char*>(bytes), bytes_written);
+        tracks_written += tracks_to_write;
+    }
+    o.flush();
+
+    delete [] bytes;
+}
+
+MuslyJukebox*
+MuslyJukebox::deserialize(std::istream& i)
+{
+    std::string read_version;
+    std::getline(i, read_version, '\0');
+    if (read_version.empty() || read_version != musly_version())
+    {
+        throw std::runtime_error("version not compatible");
+    }
+
+    uint8_t int_size;
+    i.read(reinterpret_cast<char*>(&int_size), sizeof(uint8_t));
+    if (int_size != sizeof(int))
+    {
+        throw std::runtime_error("invalid integer size");
+    }
+
+    unsigned int byte_order;
+    i.read(reinterpret_cast<char*>(&byte_order), sizeof(int));
+    if (byte_order != 0x01020304)
+    {
+        throw std::runtime_error("invalid byte order");
+    }
+
+    std::string method, decoder;
+    std::getline(i, method, '\0');
+    std::getline(i, decoder, '\0');
+
+    // if ignore decoder
+
+    MuslyJukebox* jukebox = new MuslyJukebox(method.c_str(), decoder.c_str());
+
+    int track_size = musly_jukebox_binsize(jukebox->m_jukebox, 0, 1);
+    int header_size;
+    i.read(reinterpret_cast<char*>(&header_size), sizeof(int));
+
+    unsigned char* header = new unsigned char[header_size];
+    i.read(reinterpret_cast<char*>(header), header_size);
+    int track_count = musly_jukebox_frombin(jukebox->m_jukebox, header, 1, 0);
+    delete [] header;
+    if (track_count < 0)
+    {
+        throw std::runtime_error("invalid header");
+    }
+
+    const int tracks_per_chunk = 100;
+    int buffer_len = track_size * tracks_per_chunk;
+    unsigned char* buffer = new unsigned char[buffer_len];
+   
+    int tracks_read = 0;
+    int tracks_to_read = 0;
+    while (tracks_read < track_count)
+    {
+        tracks_to_read = std::min(tracks_per_chunk, track_count - tracks_read);
+        i.read(reinterpret_cast<char*>(buffer), tracks_to_read * track_size);
+        if (i.fail())
+        {
+            delete [] buffer;
+            delete jukebox;
+            throw std::runtime_error("received less tracks than expected");
+        }
+        if (musly_jukebox_frombin(jukebox->m_jukebox, buffer, 0, tracks_to_read) < 0)
+        {
+            delete [] buffer;
+            delete jukebox;
+            throw std::runtime_error("failed to load track information");
+        }
+
+        tracks_read += tracks_to_read;
+    }
+
+    delete [] buffer;
+
+    return jukebox;
 }
 
 void
@@ -281,6 +433,8 @@ init_MuslyJukebox(py::module_& m)
         .def("track_from_audiodata", &MuslyJukebox::track_from_audiodata, py::return_value_policy::take_ownership)
         .def("serialize_track", &MuslyJukebox::serialize_track, py::return_value_policy::take_ownership)
         .def("deserialize_track", &MuslyJukebox::deserialize_track, py::return_value_policy::take_ownership)
+        .def("serialize", &MuslyJukebox::serialize)
+        .def("deserialize", &MuslyJukebox::deserialize, py::return_value_policy::take_ownership)
         .def("set_style", &MuslyJukebox::set_style)
         .def("add_tracks", &MuslyJukebox::add_tracks)
         .def("remove_tracks", &MuslyJukebox::remove_tracks)
