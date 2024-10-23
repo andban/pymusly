@@ -21,7 +21,7 @@ public:
 
 public:
     static MuslyJukebox*
-    create_from_stream(std::istream& i);
+    create_from_stream(std::istream& i, bool ignore_decoder = true);
 
     static void
     register_class(pybind11::module_& m);
@@ -92,8 +92,5 @@ public:
 private:
     musly_jukebox m_jukebox;
 };
-
-void
-init_MuslyJukebox(pybind11::module_& m);
 
 #endif // !MUSLY_JUKEBOX_H_

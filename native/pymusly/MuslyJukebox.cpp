@@ -268,17 +268,17 @@ MuslyJukebox::deserialize_track(py::bytes bytes)
 void
 MuslyJukebox::serialize(std::ostream& o)
 {
+    const int tracks_per_chunk = 100;
+    const int endian = 0x01020304;
+
     const int header_size = musly_jukebox_binsize(m_jukebox, 1, 0);
     if (header_size < 0)
     {
         throw musly_error("pymusly: could not get jukebox header size");
     }
 
-    const int tracks_per_chunk = 100;
-
     // write current musly_version, sizeof(int) and known int value for
     // compatibility checks when deserializing the file at a later point in time
-    int endian = 0x01020304;
     o << musly_version() << '\0'
       << (uint8_t) sizeof(int);
     o.write(reinterpret_cast<const char*>(&endian), sizeof(int));
@@ -327,7 +327,7 @@ cleanup:
 }
 
 MuslyJukebox*
-MuslyJukebox::create_from_stream(std::istream& i)
+MuslyJukebox::create_from_stream(std::istream& i, bool ignore_decoder)
 {
     std::string read_version;
     std::getline(i, read_version, '\0');
@@ -350,13 +350,23 @@ MuslyJukebox::create_from_stream(std::istream& i)
         throw musly_error("invalid byte order");
     }
 
+    const std::string decoders = musly_jukebox_listdecoders();
+
     std::string method, decoder;
     std::getline(i, method, '\0');
     std::getline(i, decoder, '\0');
-
-    // if ignore decoder
-
-    MuslyJukebox* jukebox = new MuslyJukebox(method.c_str(), decoder.c_str());
+    if (decoder.empty() || decoders.find(decoder) == decoder.npos)
+    {
+        if (!ignore_decoder)
+        {
+            throw musly_error("pymusly: decoder not supported with the current libmusly: " + decoder);
+        }
+        decoder = "";
+    }
+    MuslyJukebox* jukebox = new MuslyJukebox(
+            method.c_str(),
+            decoder.empty() ? nullptr : decoder.c_str()
+    );
 
     int track_size = musly_jukebox_binsize(jukebox->m_jukebox, 0, 1);
     int header_size;
@@ -368,6 +378,7 @@ MuslyJukebox::create_from_stream(std::istream& i)
     delete [] header;
     if (track_count < 0)
     {
+        delete jukebox;
         throw musly_error("invalid header");
     }
 
@@ -403,9 +414,8 @@ MuslyJukebox::create_from_stream(std::istream& i)
 }
 
 void
-init_MuslyJukebox(py::module_& m)
+MuslyJukebox::register_class(py::module_& m)
 {
-
     py::class_<MuslyJukebox>(m, "MuslyJukebox")
         .def(py::init<const char*, const char*>(), py::arg("method") = nullptr, py::arg("decoder") = nullptr)
         .def(py::init(&MuslyJukebox::create_from_stream))

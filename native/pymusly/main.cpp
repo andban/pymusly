@@ -38,7 +38,7 @@ PYBIND11_MODULE(_pymusly, m) {
             Use a decoder name to power on a Musly jukebox.
     )pbdoc");
 
-    init_MuslyJukebox(m);
+    MuslyJukebox::register_class(m);
     MuslyTrack::register_class(m);
     musly_error::register_with_module(m);
 
