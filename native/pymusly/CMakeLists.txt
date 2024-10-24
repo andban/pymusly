@@ -20,7 +20,7 @@ install(TARGETS _pymusly DESTINATION pymusly)
 
 if (DEFINED ENV{CIBUILDWHEEL})
     install(IMPORTED_RUNTIME_ARTIFACTS libmusly LIBRARY DESTINATION pymusly)
-    set_target_properties(_pymusly PROPERTIES INSTALL_RPATH_USE_LINK_PATH)
+    set_target_properties(_pymusly PROPERTIES INSTALL_RPATH_USE_LINK_PATH TRUE)
     install(FILES ${libmusly_SOURCE_DIR}/COPYING
         DESTINATION ${SKBUILD_METADATA_DIR}/licenses
         RENAME LICENSE.libmusly.txt)
