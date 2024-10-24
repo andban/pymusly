@@ -1,6 +1,32 @@
 name: Build
 
-on: [push, pull_request]
+on:
+  release:
+    types: [created]
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - 'docs/**'
+      - 'tests/**'
+      - .gitignore
+      - Makefile
+      - '*.md'
+      - '*.txt'
+      - '.github/workflows/*.yml'
+      - '!.github/workflows/build_wheels.yml'
+  pull_request:
+    branches:
+      - main
+    paths-ignore:
+      - 'docs/**'
+      - 'tests/**'
+      - .gitignore
+      - Makefile
+      - '*.md'
+      - '*.txt'
+      - '.github/workflows/*.yml'
+      - '!.github/workflows/build_wheels.yml'
 
 jobs:
   build_sdist:
