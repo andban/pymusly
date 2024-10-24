@@ -19,17 +19,15 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 set(LIB_INSTALL_DESTINATION "pymusly")
 
-# make sure Eigen3 library is present
+# make sure Musly library is present
 include(FetchContent)
-
-set(BUILD_STATIC true)
 
 FetchContent_Declare(libmusly
     GIT_REPOSITORY      https://github.com/andban/musly.git
     GIT_TAG             origin/feat/modernized-build-scripts
     DOWNLOAD_EXTRACT_TIMESTAMP TRUE
     EXCLUDE_FROM_ALL
-    FIND_PACKAGE_ARGS NO_MODULE
+    FIND_PACKAGE_ARGS
 )
 FetchContent_MakeAvailable(libmusly)
 

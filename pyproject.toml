@@ -9,7 +9,7 @@ build-backend = "scikit_build_core.build"
 [project]
 name = "pymusly"
 version = "0.1.0"
-description = "A wrapper for libmusly"
+description = "Python bindings for libmusly to perform music similarity computation."
 readme = "README.md"
 license = { file = "LICENSE.txt" }
 authors = [
@@ -53,7 +53,7 @@ musllinux-aarch64-image = "musllinux_1_2"
 select = "*-manylinux*"
 before-build = [
     "yum install --nogpgcheck https://mirrors.rpmfusion.org/free/el/rpmfusion-free-release-8.noarch.rpm -y",
-    "yum install ffmpeg ffmpeg-devel cmake -y"
+    "yum install ffmpeg-devel cmake -y"
 ]
 
 [[tool.cibuildwheel.overrides]]
