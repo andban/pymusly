@@ -9,21 +9,26 @@ python_add_library(_pymusly
     WITH_SOABI
 )
 target_link_libraries(_pymusly
-    PRIVATE pybind11::headers libmusly
+    PRIVATE
+        pybind11::headers
+        Musly::libmusly
 )
 target_include_directories(_pymusly
-    PRIVATE libmusly)
+    PRIVATE Musly::libmusly
+)
+
 target_compile_definitions(_pymusly
-    PRIVATE VERSION_INFO=${PROJECT_VERSION})
+    PRIVATE VERSION_INFO=${PROJECT_VERSION}
+)
 
 install(TARGETS _pymusly DESTINATION pymusly)
 
-if (DEFINED ENV{CIBUILDWHEEL})
+if (${SKBUILD_STATE} STREQUAL "wheel")
     install(IMPORTED_RUNTIME_ARTIFACTS libmusly LIBRARY DESTINATION pymusly)
     set_target_properties(_pymusly PROPERTIES INSTALL_RPATH_USE_LINK_PATH TRUE)
-    install(FILES ${libmusly_SOURCE_DIR}/COPYING
+    install(FILES ${musly_SOURCE_DIR}/COPYING
         DESTINATION ${SKBUILD_METADATA_DIR}/licenses
-        RENAME LICENSE.libmusly.txt)
+        RENAME LICENSE.musly.txt)
 endif()
 
 if(APPLE)
