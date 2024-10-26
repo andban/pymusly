@@ -33,15 +33,7 @@ FetchContent_Declare(Musly
     EXCLUDE_FROM_ALL
 )
 
-FetchContent_GetProperties(Musly)
-if(NOT Musly_POPULATED AND NOT Musly_FOUND)
-    message(STATUS "Downloading Musly source code.")
-    FetchContent_Populate(Musly)
-
-    message(STATUS "Configuring Musly.")
-    add_subdirectory(${musly_SOURCE_DIR} ${musly_BINARY_DIR} EXCLUDE_FROM_ALL)
-endif()
-#FetchContent_MakeAvailable(Musly)
+FetchContent_MakeAvailable(Musly)
 
 
 add_subdirectory(pymusly)

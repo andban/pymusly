@@ -41,7 +41,15 @@ wheel.expand-macos-universal-tags = true
 wheel.packages = ["src/pymusly"]
 minimum-version = "build-system.requires"
 cmake.source-dir = "native"
-build.verbose= true
+build.verbose = true
+wheel.exclude = [
+    # cmake on manylinux can't help itself to install all that crap
+    "include",
+    "lib64",
+    "lib",
+    "bin",
+    "share"
+]
 
 [tool.cibuildwheel]
 manylinux-x86_64-image = "manylinux_2_28"
