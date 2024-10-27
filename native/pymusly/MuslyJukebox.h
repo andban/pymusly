@@ -43,7 +43,7 @@ public:
     track_size() const;
 
     MuslyTrack*
-    track_from_audiofile(const char* filename, int start, int length);
+    track_from_audiofile(const char* filename, int length, int start);
 
     MuslyTrack*
     track_from_audiodata(const std::vector<float>& pcm_data);

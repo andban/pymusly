@@ -93,7 +93,7 @@ MuslyJukebox::track_ids() const
 }
 
 MuslyTrack*
-MuslyJukebox::track_from_audiofile(const char* filename, int start, int length)
+MuslyJukebox::track_from_audiofile(const char* filename, int length, int start)
 {
     musly_track* track = musly_track_alloc(m_jukebox);
     if (track == nullptr)
@@ -236,7 +236,6 @@ MuslyJukebox::serialize_track(MuslyTrack* track)
     }
 
     char* bytes = new char[track_size()];
-
     int err = musly_track_tobin(m_jukebox, track->data(), reinterpret_cast<unsigned char*>(bytes));
     if (err < 0)
     {
@@ -418,7 +417,7 @@ MuslyJukebox::register_class(py::module_& m)
 {
     py::class_<MuslyJukebox>(m, "MuslyJukebox")
         .def(py::init<const char*, const char*>(), py::arg("method") = nullptr, py::arg("decoder") = nullptr)
-        .def(py::init(&MuslyJukebox::create_from_stream))
+        .def_static("create_from_stream", &MuslyJukebox::create_from_stream, py::return_value_policy::take_ownership)
         .def_property_readonly("method", &MuslyJukebox::method)
         .def_property_readonly("method_info", &MuslyJukebox::method_info)
         .def_property_readonly("decoder", &MuslyJukebox::decoder)
