@@ -1,11 +1,13 @@
 name: Build
 
 on:
+  workflow_run:
+    workflows: [ "Run Tests" ]
+    types: [ completed ]
   release:
-    types: [created]
+    types: [ created ]
   push:
-    branches:
-      - main
+    branches: [ main ]
     paths-ignore:
       - 'docs/**'
       - 'tests/**'
@@ -16,8 +18,7 @@ on:
       - '.github/workflows/*.yml'
       - '!.github/workflows/build_wheels.yml'
   pull_request:
-    branches:
-      - main
+    branches: [ main ]
     paths-ignore:
       - 'docs/**'
       - 'tests/**'
@@ -32,6 +33,7 @@ jobs:
   build_sdist:
     name: Build source distribution
     runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     steps:
       - uses: actions/checkout@v3
 
@@ -49,6 +51,7 @@ jobs:
   build_wheels:
     name: Build wheel on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     strategy:
       matrix:
         os: [ ubuntu-latest, windows-latest, macos-14 ]
