@@ -1,23 +1,18 @@
 from __future__ import annotations
 
-import io
-import struct
-from functools import cached_property
-from struct import calcsize
-
 from ._pymusly import (
     __doc__,
     __version__,
     get_musly_version,
     set_musly_log_level,
     musly_jukebox_listmethods as _musly_list_methods,
-    musly_jukebox_listdecoders  as _musly_list_decoders,
+    musly_jukebox_listdecoders as _musly_list_decoders,
     MuslyJukebox as OriginalMuslyJukebox,
     MuslyTrack,
     MuslyError,
 )
 
-from .ffmpeg_decode import duration_with_ffprobe, _AudioReader, decode_with_ffmpeg
+from .ffmpeg_decode import duration_with_ffprobe, decode_with_ffmpeg
 
 
 def get_musly_methods():
@@ -33,12 +28,14 @@ def get_musly_decoders():
 
 
 class MuslyJukebox(OriginalMuslyJukebox):
-    def __init__(self, method: str = None, decoder: str = None):#
+    def __init__(self, method: str = None, decoder: str = None):  #
         OriginalMuslyJukebox.__init__(self, method=method, decoder=decoder)
 
     def track_from_audiofile(self, filename: str, length: float, start: float):
-        if self.decoder != 'none':
-            return OriginalMuslyJukebox.track_from_audiofile(self, filename, length, start)
+        if self.decoder != "none":
+            return OriginalMuslyJukebox.track_from_audiofile(
+                self, filename, length, start
+            )
 
         duration = duration_with_ffprobe(filename)
         if length <= 0 or length >= duration:
@@ -50,7 +47,7 @@ class MuslyJukebox(OriginalMuslyJukebox):
             start = max(0.0, duration - length)
             length = min(duration, duration - start)
 
-        samples = decode_with_ffmpeg(filename, start ,length)
+        samples = decode_with_ffmpeg(filename, start, length)
         return self.track_from_audiodata(samples)
 
 

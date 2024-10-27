@@ -12,9 +12,9 @@ from pymusly._pymusly import MuslyError
 
 _sample_rate = "22050"
 _channels = "1"
-_ffmpeg_commands = ('ffmpeg', 'avconv')
+_ffmpeg_commands = ("ffmpeg", "avconv")
 
-_ffprobe_commands = ('ffprobe', 'avprobe')
+_ffprobe_commands = ("ffprobe", "avprobe")
 _duration_pattern = re.compile('^format\\.duration="(?P<duration>[0-9]+\\.[0-9]+)"$')
 
 
@@ -45,6 +45,7 @@ def _popen_avconv(cli_args, *args, **kwargs):
             continue
     raise MuslyError(f"no ffmpeg command found, tried: {_ffmpeg_commands}")
 
+
 def _run_avprope(cli_args, *args, **kwargs):
     for cmd in _ffprobe_commands:
         cmd_with_args = [cmd] + cli_args
@@ -54,21 +55,22 @@ def _run_avprope(cli_args, *args, **kwargs):
             continue
     raise MuslyError(f"no ffprobe command found, tried: {_ffprobe_commands}")
 
+
 class _AudioReader:
     def __init__(self, filename: str, start: float, length: float):
-        start_str = f'0{datetime.timedelta(seconds=start)}'[0:8]
-        end_str = f'0{datetime.timedelta(seconds=start + length)}'[0:8]
+        start_str = f"0{datetime.timedelta(seconds=start)}"[0:8]
+        end_str = f"0{datetime.timedelta(seconds=start + length)}"[0:8]
 
         args = [
-            '-y',
-            '-i', filename,
-            '-ss', start_str,
-            '-to', end_str,
-            '-f', 'f32le' if sys.byteorder == 'little' else 'f32be',
-            '-ac', _channels,
-            '-ar', _sample_rate,
-            '-'
-        ]
+            "-y",
+            "-i", filename,
+            "-ss", start_str,
+            "-to", end_str,
+            "-f", "f32le" if sys.byteorder == "little" else "f32be",
+            "-ac", _channels,
+            "-ar", _sample_rate,
+            "-",
+        ]  # fmt: skip
 
         try:
             self.proc = _popen_avconv(
@@ -77,8 +79,8 @@ class _AudioReader:
                 stderr=subprocess.PIPE,
                 stdin=subprocess.DEVNULL,
             )
-        except:
-            raise NotImplementedError()
+        except Exception as e:
+            raise MuslyError(f"failure while calling ffmpeg: {e}")
 
         self.reader = _ReaderThread(self.proc.stdout, io.DEFAULT_BUFFER_SIZE)
         self.reader.start()
@@ -101,8 +103,8 @@ class _AudioReader:
                 cur_time = time.time()
                 if not data:
                     if cur_time - start_time >= timeout:
-                        err = b''.join(self.err_reader.queue.queue)
-                        raise RuntimeError(f'ffmpeg hangs: {err}')
+                        err = b"".join(self.err_reader.queue.queue)
+                        raise RuntimeError(f"ffmpeg hangs: {err}")
                     else:
                         start_time = cur_time
                         continue
@@ -113,9 +115,9 @@ class _AudioReader:
             self.proc.kill()
             self.proc.wait()
 
-        if hasattr(self, 'err_reader'):
+        if hasattr(self, "err_reader"):
             self.err_reader.join()
-        if hasattr(self, 'reader'):
+        if hasattr(self, "reader"):
             self.reader.join()
 
         self.proc.stdout.close()
@@ -145,24 +147,23 @@ def decode_with_ffmpeg(filename, start, length):
     return struct.unpack(f"={n_samples}f", raw_samples)
 
 
-
 def duration_with_ffprobe(filename: str):
     args = [
-        '-print_format', 'flat',
-        '-show_format_entry', 'duration',
+        "-print_format", "flat",
+        "-show_format_entry", "duration",
         filename,
-    ]
+    ]  # fmt: skip
 
     try:
         result = _run_avprope(args, capture_output=True, text=True)
-    except:
-        raise RuntimeError()
+    except Exception as e:
+        raise MuslyError(f"failure while calling ffprobe: {e}")
 
     if result.returncode != 0:
-        raise MuslyError(f'failure while calling ffprobe: {result.stderr}')
+        raise MuslyError(f"failed ffprobe call: {result.stderr}")
 
     match = _duration_pattern.match(result.stdout)
     if match is None:
-        raise MuslyError(f'failed parse ffprobe output: {result.stdout}')
+        raise MuslyError(f"failed parse ffprobe output: {result.stdout}")
 
-    return float(match.group('duration'))
+    return float(match.group("duration"))
