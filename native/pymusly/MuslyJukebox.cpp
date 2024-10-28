@@ -93,7 +93,7 @@ MuslyJukebox::track_ids() const
 }
 
 MuslyTrack*
-MuslyJukebox::track_from_audiofile(const char* filename, int start, int length)
+MuslyJukebox::track_from_audiofile(const char* filename, int length, int start)
 {
     musly_track* track = musly_track_alloc(m_jukebox);
     if (track == nullptr)
@@ -236,7 +236,6 @@ MuslyJukebox::serialize_track(MuslyTrack* track)
     }
 
     char* bytes = new char[track_size()];
-
     int err = musly_track_tobin(m_jukebox, track->data(), reinterpret_cast<unsigned char*>(bytes));
     if (err < 0)
     {
@@ -268,17 +267,17 @@ MuslyJukebox::deserialize_track(py::bytes bytes)
 void
 MuslyJukebox::serialize(std::ostream& o)
 {
+    const int tracks_per_chunk = 100;
+    const int endian = 0x01020304;
+
     const int header_size = musly_jukebox_binsize(m_jukebox, 1, 0);
     if (header_size < 0)
     {
         throw musly_error("pymusly: could not get jukebox header size");
     }
 
-    const int tracks_per_chunk = 100;
-
     // write current musly_version, sizeof(int) and known int value for
     // compatibility checks when deserializing the file at a later point in time
-    int endian = 0x01020304;
     o << musly_version() << '\0'
       << (uint8_t) sizeof(int);
     o.write(reinterpret_cast<const char*>(&endian), sizeof(int));
@@ -327,7 +326,7 @@ cleanup:
 }
 
 MuslyJukebox*
-MuslyJukebox::create_from_stream(std::istream& i)
+MuslyJukebox::create_from_stream(std::istream& i, bool ignore_decoder)
 {
     std::string read_version;
     std::getline(i, read_version, '\0');
@@ -350,13 +349,23 @@ MuslyJukebox::create_from_stream(std::istream& i)
         throw musly_error("invalid byte order");
     }
 
+    const std::string decoders = musly_jukebox_listdecoders();
+
     std::string method, decoder;
     std::getline(i, method, '\0');
     std::getline(i, decoder, '\0');
-
-    // if ignore decoder
-
-    MuslyJukebox* jukebox = new MuslyJukebox(method.c_str(), decoder.c_str());
+    if (decoder.empty() || decoders.find(decoder) == decoder.npos)
+    {
+        if (!ignore_decoder)
+        {
+            throw musly_error("pymusly: decoder not supported with the current libmusly: " + decoder);
+        }
+        decoder = "";
+    }
+    MuslyJukebox* jukebox = new MuslyJukebox(
+            method.c_str(),
+            decoder.empty() ? nullptr : decoder.c_str()
+    );
 
     int track_size = musly_jukebox_binsize(jukebox->m_jukebox, 0, 1);
     int header_size;
@@ -368,6 +377,7 @@ MuslyJukebox::create_from_stream(std::istream& i)
     delete [] header;
     if (track_count < 0)
     {
+        delete jukebox;
         throw musly_error("invalid header");
     }
 
@@ -403,26 +413,153 @@ MuslyJukebox::create_from_stream(std::istream& i)
 }
 
 void
-init_MuslyJukebox(py::module_& m)
+MuslyJukebox::register_class(py::module_& m)
 {
 
     py::class_<MuslyJukebox>(m, "MuslyJukebox")
-        .def(py::init<const char*, const char*>(), py::arg("method") = nullptr, py::arg("decoder") = nullptr)
-        .def(py::init(&MuslyJukebox::create_from_stream))
-        .def_property_readonly("method", &MuslyJukebox::method)
-        .def_property_readonly("method_info", &MuslyJukebox::method_info)
-        .def_property_readonly("decoder", &MuslyJukebox::decoder)
-        .def_property_readonly("track_size", &MuslyJukebox::track_size)
-        .def_property_readonly("track_count", &MuslyJukebox::track_count)
-        .def_property_readonly("highest_track_id", &MuslyJukebox::highest_track_id)
-        .def_property_readonly("track_ids", &MuslyJukebox::track_ids)
-        .def("track_from_audiofile", &MuslyJukebox::track_from_audiofile, py::return_value_policy::take_ownership)
-        .def("track_from_audiodata", &MuslyJukebox::track_from_audiodata, py::return_value_policy::take_ownership)
-        .def("serialize_track", &MuslyJukebox::serialize_track, py::return_value_policy::take_ownership)
-        .def("deserialize_track", &MuslyJukebox::deserialize_track, py::return_value_policy::take_ownership)
-        .def("serialize_to_stream", &MuslyJukebox::serialize)
-        .def("set_style", &MuslyJukebox::set_style)
-        .def("add_tracks", &MuslyJukebox::add_tracks)
-        .def("remove_tracks", &MuslyJukebox::remove_tracks)
-        .def("compute_similarity", &MuslyJukebox::compute_similarity);
+        .def(py::init<const char*, const char*>(), py::arg("method") = nullptr, py::arg("decoder") = nullptr, R"pbdoc(
+            Create a new jukebox instance using the given analysis method and audio decoder.
+
+            For a list of supported analysis methods and audio decoders, you can call pymusly.get_musly_methods / pymusly.get_musly_decoders.
+
+            :param method:
+                the method to use for audio data analysis.
+                Call pymusly.get_musly_methods() to get a list of available options.
+                If `None` is given, the default method is used.
+            :param decoder:
+                the decoder to use to analyze audio data loaded from files.
+                Call pymusly.get_musly_decoders() to get a list of available options.
+                If `None`, a default decoder is used.
+        )pbdoc")
+
+        .def_static("create_from_stream", &MuslyJukebox::create_from_stream, py::arg("input_stream"), py::arg("ignore_decoder"), py::return_value_policy::take_ownership, R"pbdoc(
+            Load previously serialized MuslyJukebox from an io.BytesIO stream.
+
+            :param stream:
+                an readable binary stream, like the result of `open('electronic-music.jukebox', 'rb')`.
+            :param ignore_decoder:
+                when `True`, the resulting jukebox will use the default decoder, in case the original decoder is not available.
+
+            :return: the deserialized jukebox
+            :rtype: MuslyJukebox
+            :raises MuslyError: if the deserialization failed
+        )pbdoc")
+
+        .def_property_readonly("method", &MuslyJukebox::method, R"pbdoc(
+            The method for audio data analysis used by this jukebox instance.
+        )pbdoc")
+
+        .def_property_readonly("method_info", &MuslyJukebox::method_info, R"pbdoc(
+            A description of the analysis method used by this jukebox instance.
+        )pbdoc")
+
+        .def_property_readonly("decoder", &MuslyJukebox::decoder, R"pbdoc(
+            The decoder for reading audio files used by this jukebox instance.
+        )pbdoc")
+
+        .def_property_readonly("track_size", &MuslyJukebox::track_size, R"pbdoc(
+            The size in bytes of MuslyTrack instances created by this jukebox instance.
+        )pbdoc")
+
+        .def_property_readonly("track_count", &MuslyJukebox::track_count, R"pbdoc(
+            The number of tracks that were added to this jukebox using the add_tracks method.
+        )pbdoc")
+
+        .def_property_readonly("highest_track_id", &MuslyJukebox::highest_track_id, R"pbdoc(
+            The highest track id that was assigned to tracks added to this jukebox instance.
+        )pbdoc")
+
+        .def_property_readonly("track_ids", &MuslyJukebox::track_ids, R"pbdoc("
+            A list of all track ids assigned to tracks added to this jukebox instance.
+        )pbdoc")
+
+        .def("track_from_audiofile", &MuslyJukebox::track_from_audiofile, py::arg("input_stream"), py::arg("length"), py::arg("start"), py::return_value_policy::take_ownership, R"pbdoc(
+            Create a MuslyTrack by analysing an excerpt of the given audio file.
+
+            The audio file is decoded by using the decoder selected during MuslyJukebox creation. The decoded audio signal is then down- and resampled into a 20,050Hz mono signal which is used as input for track_from_audiodata().
+
+            :param input_stream:
+                an input stream to the audio file to decode, like the result of `open('test.mp3', 'rb')`.
+            :param ignore_decoder:
+                when True, the resulting jukebox will use the default decoder, when the original decoder is not available.
+        )pbdoc")
+
+        .def("track_from_audiodata", &MuslyJukebox::track_from_audiodata, py::arg("pcm_data"), py::return_value_policy::take_ownership, R"pbdoc(
+            Create a MuslyTrack by analyzing the provided PCM samples.
+
+            The input samples are expected to represent a mono signal with 22050Hz sample rate using float values.
+
+            :param pcm_data:
+                the sample data to analyze.
+        )pbdoc")
+
+        .def("serialize_track", &MuslyJukebox::serialize_track, py::arg("track"), py::return_value_policy::take_ownership, R"pbdoc(
+            Serialize a MuslyTrack into a `bytes` object.
+
+            :param track:
+                a MuslyTrack object.
+        )pbdoc")
+
+        .def("deserialize_track", &MuslyJukebox::deserialize_track, py::arg("bytes_track"), py::return_value_policy::take_ownership, R"pbdoc(
+            Deserialize a MuslyTrack from a `bytes` object.
+
+            :param bytes_track:
+                a previously with :func:`serialize_track` serialized MuslyTrack.
+        )pbdoc")
+
+        .def("serialize_to_stream", &MuslyJukebox::serialize, py::arg("output_stream"), R"pbdoc(
+            Serialize jukebox instance into a `io.BytesIO` stream`.
+
+            :param output_stream:
+                an output stream, like one created by `open('electronic-music.jukebox', 'wb')`.
+        )pbdoc")
+
+        .def("set_style", &MuslyJukebox::set_style, py::arg("tracks"), R"pbdoc(
+            Initialize jukebox with a set of tracks that are used as reference by the similarity computation function.
+
+            As a rule of thumb, use a maximum of 1000 randomly selected tracks to set the music style (random selection
+            is important to get a representative sample; if the sample is biased, results will be suboptimal).
+            The tracks are analyzed and copied to internal storage as needed, so you may safely deallocate the given tracks after the call.
+
+            :param tracks:
+                a list of MuslyTrack instances.
+        )pbdoc")
+
+        .def("add_tracks", &MuslyJukebox::add_tracks, py::arg("tracks"), py::arg("track_ids"), R"pbdoc(
+            Register tracks with the Musly jukebox.
+
+            To use the music similarity function, each Musly track has to be registered with a jukebox.
+            Internally, Musly computes an indexing and normalization vector for each registered track based on the set of tracks passed to :func:`set_style`.
+
+            :param tracks:
+                a list of MuslyTrack instances.
+            :param track_ids:
+                a list with an unique id for each MuslyTrack in `tracks`.
+        )pbdoc")
+
+        .def("remove_tracks", &MuslyJukebox::remove_tracks, py::arg("track_ids"), R"pbdoc(
+            Remove tracks that were previously added to the jukebox via :func:`add_tracks`.
+
+            :param track_ids:
+                a list of track ids that belong to previously added tracks.
+        )pbdoc")
+
+        .def("compute_similarity", &MuslyJukebox::compute_similarity, py::arg("seed_track"), py::arg("seed_track_id"), py::arg("tracks"), py::arg("track_ids"), R"pbdoc(
+            Compute the similarity between a seed track and a list of other tracks.
+
+            To compute similarities between two music tracks, the following steps have to been taken:
+
+            - analyze audio files, e.g. with :func:`track_from_audiofile` or :func:`track_from_audiodata`
+            - set the music style of the jukebox by using a representative sample of analyzed tracks with :func:`set_style`
+            - register the audio tracks with the jukebox using :func:`add_tracks`
+
+            :param seed_track:
+                the MuslyTrack used as reference.
+            :param seed_track_id:
+                the track id of the seed track.
+            :param tracks:
+                a list of MuslyTrack instances for which the similarities to the `seed_track` should be computed.
+            :param track_ids:
+                a list of track ids for the tracks given in `tracks`.
+        )pbdoc");
 }

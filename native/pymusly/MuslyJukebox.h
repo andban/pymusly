@@ -21,7 +21,7 @@ public:
 
 public:
     static MuslyJukebox*
-    create_from_stream(std::istream& i);
+    create_from_stream(std::istream& i, bool ignore_decoder = true);
 
     static void
     register_class(pybind11::module_& m);
@@ -43,7 +43,7 @@ public:
     track_size() const;
 
     MuslyTrack*
-    track_from_audiofile(const char* filename, int start, int length);
+    track_from_audiofile(const char* filename, int length, int start);
 
     MuslyTrack*
     track_from_audiodata(const std::vector<float>& pcm_data);
@@ -92,8 +92,5 @@ public:
 private:
     musly_jukebox m_jukebox;
 };
-
-void
-init_MuslyJukebox(pybind11::module_& m);
 
 #endif // !MUSLY_JUKEBOX_H_

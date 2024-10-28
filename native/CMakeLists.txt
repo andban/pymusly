@@ -1,10 +1,14 @@
-cmake_minimum_required(VERSION 3.15)
+cmake_minimum_required(VERSION 3.23)
 
 project(
     ${SKBUILD_PROJECT_NAME}
     VERSION ${SKBUILD_PROJECT_VERSION}
     LANGUAGES C CXX
 )
+
+if(NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE "Release")
+endif()
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_C_EXTENSIONS OFF)
@@ -19,19 +23,17 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 set(LIB_INSTALL_DESTINATION "pymusly")
 
-# make sure Eigen3 library is present
+# make sure Musly library is present
 include(FetchContent)
 
-set(BUILD_STATIC true)
-
-FetchContent_Declare(libmusly
+FetchContent_Declare(Musly
     GIT_REPOSITORY      https://github.com/andban/musly.git
     GIT_TAG             origin/feat/modernized-build-scripts
     DOWNLOAD_EXTRACT_TIMESTAMP TRUE
     EXCLUDE_FROM_ALL
-    FIND_PACKAGE_ARGS NO_MODULE
 )
-FetchContent_MakeAvailable(libmusly)
+
+FetchContent_MakeAvailable(Musly)
 
 
 add_subdirectory(pymusly)
