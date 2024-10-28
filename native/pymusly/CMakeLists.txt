@@ -29,7 +29,7 @@ install(TARGETS _pymusly
 install(IMPORTED_RUNTIME_ARTIFACTS libmusly LIBRARY DESTINATION pymusly)
 set_target_properties(_pymusly PROPERTIES INSTALL_RPATH_USE_LINK_PATH TRUE)
 
-if (${SKBUILD_STATE} STREQUAL "wheel")
+if (${SKBUILD})
     install(FILES ${musly_SOURCE_DIR}/COPYING
         DESTINATION ${SKBUILD_METADATA_DIR}/licenses
         RENAME LICENSE.musly.txt)

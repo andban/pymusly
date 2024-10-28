@@ -60,19 +60,6 @@ manylinux-aarch64-image = "manylinux_2_28"
 musllinux-x86_64-image = "musllinux_1_2"
 musllinux-aarch64-image = "musllinux_1_2"
 
-[[tool.cibuildwheel.overrides]]
-select = "*-manylinux*"
-before-build = [
-    "yum install --nogpgcheck https://mirrors.rpmfusion.org/free/el/rpmfusion-free-release-8.noarch.rpm -y",
-    "yum install ffmpeg-devel cmake -y"
-]
-
-[[tool.cibuildwheel.overrides]]
-select = "*-musllinux*"
-before-all = [
-    "apk add ffmpeg-dev cmake"
-]
-
 [tool.pytest.ini_options]
 minversion = 8.0
 addopts = [
