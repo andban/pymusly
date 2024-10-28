@@ -12,30 +12,31 @@
 namespace py = pybind11;
 
 PYBIND11_MODULE(_pymusly, m) {
-    m.doc() = R"pbdoc(
-
-    )pbdoc";
+    py::options options;
+    //options.disable_function_signatures();
 
     m.def("get_musly_version", musly_version, R"pbdoc(
         Return the version of Musly.
     )pbdoc");
 
-    m.def("set_musly_log_level", musly_debug, R"pbdoc(
+    m.def("set_musly_loglevel", musly_debug, py::arg("level"), R"pbdoc(
         Set the musly debug level.
 
         Valid levels are 0 (Quiet, DEFAULT), 1 (Error), 2 (Warning), 3 (Info), 4 (Debug), 5 (Trace). All output will be sent to stderr.
     )pbdoc");
 
     m.def("musly_jukebox_listmethods", musly_jukebox_listmethods, R"pbdoc(
-        Lists all available music similarity methods.
+        All available music similarity methods as comma separated string.
 
-        Use a method name to power on a Musly jukebox.
+        Use a method name to create a Musly jukebox.
+        The methods are used to analyze sample data in MuslyJukebox#track_from_audiofile and MuslyJukebox#track_from_audiodata
     )pbdoc");
 
     m.def("musly_jukebox_listdecoders", musly_jukebox_listdecoders, R"pbdoc(
-            Lists all available audio file decoders.
+            All available audio file decoders as comma separated string.
 
-            Use a decoder name to power on a Musly jukebox.
+            Use a decoder name to create a MuslyJukebox.
+            The decoders are used to load sample data for analysis in MuslyJukebox#track_from_audiofile.
     )pbdoc");
 
     MuslyJukebox::register_class(m);

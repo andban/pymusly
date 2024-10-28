@@ -21,11 +21,15 @@ target_compile_definitions(_pymusly
     PRIVATE VERSION_INFO=${PROJECT_VERSION}
 )
 
-install(TARGETS _pymusly DESTINATION pymusly)
+install(TARGETS _pymusly
+    LIBRARY DESTINATION pymusly
+    RUNTIME DESTINATION pymusly
+)
+
+install(IMPORTED_RUNTIME_ARTIFACTS libmusly LIBRARY DESTINATION pymusly)
+set_target_properties(_pymusly PROPERTIES INSTALL_RPATH_USE_LINK_PATH TRUE)
 
 if (${SKBUILD_STATE} STREQUAL "wheel")
-    install(IMPORTED_RUNTIME_ARTIFACTS libmusly LIBRARY DESTINATION pymusly)
-    set_target_properties(_pymusly PROPERTIES INSTALL_RPATH_USE_LINK_PATH TRUE)
     install(FILES ${musly_SOURCE_DIR}/COPYING
         DESTINATION ${SKBUILD_METADATA_DIR}/licenses
         RENAME LICENSE.musly.txt)

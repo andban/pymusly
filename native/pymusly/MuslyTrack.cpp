@@ -10,7 +10,7 @@ namespace py = pybind11;
 void
 MuslyTrack::register_class(py::module_& m)
 {
-    py::class_<MuslyTrack>(m, "MuslyTrack");
+    py::class_<MuslyTrack>(m, "MuslyTrack", "Musly track data");
 }
 
 MuslyTrack::MuslyTrack(musly_track* track)

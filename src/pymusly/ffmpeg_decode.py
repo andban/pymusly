@@ -7,6 +7,7 @@ import subprocess
 import sys
 import threading
 import time
+from typing import List
 
 from pymusly._pymusly import MuslyError
 
@@ -36,7 +37,7 @@ class _ReaderThread(threading.Thread):
                 break
 
 
-def _popen_avconv(cli_args, *args, **kwargs):
+def _popen_avconv(cli_args: List[str], *args, **kwargs):
     for cmd in _ffmpeg_commands:
         cmd_with_args = [cmd] + cli_args
         try:
@@ -137,7 +138,7 @@ class _AudioReader:
         return False
 
 
-def decode_with_ffmpeg(filename, start, length):
+def _decode_with_ffmpeg(filename: str, start: float, length: float):
     raw_samples = bytearray()
     with _AudioReader(filename=filename, start=start, length=length) as r:
         for buf in r:
@@ -147,7 +148,7 @@ def decode_with_ffmpeg(filename, start, length):
     return struct.unpack(f"={n_samples}f", raw_samples)
 
 
-def duration_with_ffprobe(filename: str):
+def _duration_with_ffprobe(filename: str):
     args = [
         "-print_format", "flat",
         "-show_format_entry", "duration",

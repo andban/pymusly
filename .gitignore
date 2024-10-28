@@ -1,6 +1,7 @@
 dist/
 build/
 wheelhouse/
+docs/_build/
 
 # local stuff
 .envrc
