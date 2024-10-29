@@ -9,17 +9,17 @@ class musly_error : public std::exception
 {
 public:
     static void
-    register_with_module(pybind11::module_& m)
+    register_with_module(pybind11::module_& module)
     {
-        pybind11::register_exception<musly_error>(m, "MuslyError");
+        pybind11::register_exception<musly_error>(module, "MuslyError");
     }
 
 public:
-    musly_error(const char* msg)
-        : m_message(msg)
+    musly_error(const char* message)
+        : m_message(message)
     {}
 
-    musly_error(const std::string& msg)
+    musly_error(const std::string& message)
             : m_message(msg)
         {}
 

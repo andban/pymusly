@@ -13,7 +13,7 @@ class PYMUSLY_EXPORT MuslyTrack
 {
 public:
     static void
-    register_class(pybind11::module_& m);
+    register_class(pybind11::module_& module);
 
 public:
     MuslyTrack(musly_track* track);

@@ -16,15 +16,15 @@
 class PYMUSLY_EXPORT MuslyJukebox
 {
 public:
-    typedef std::vector<MuslyTrack*>    musly_track_vec;
+    typedef std::vector<MuslyTrack*>   musly_track_vec;
     typedef std::vector<musly_trackid> musly_trackid_vec;
 
 public:
     static MuslyJukebox*
-    create_from_stream(std::istream& i, bool ignore_decoder = true);
+    create_from_stream(std::istream& in_stream, bool ignore_decoder = true);
 
     static void
-    register_class(pybind11::module_& m);
+    register_class(pybind11::module_& module);
 
 public:
     MuslyJukebox(const char* method = nullptr, const char* decoder = nullptr);
@@ -67,7 +67,7 @@ public:
     highest_track_id() const;
 
     musly_trackid_vec
-    add_tracks(const musly_track_vec& track_list, const musly_trackid_vec& track_ids);
+    add_tracks(const musly_track_vec& tracks, const musly_trackid_vec& track_ids);
 
     void
     remove_tracks(const musly_trackid_vec& track_ids);
@@ -87,7 +87,7 @@ public:
                        const musly_trackid_vec& track_ids);
 
     void
-    serialize(std::ostream& o);
+    serialize(std::ostream& out_stream);
 
 private:
     musly_jukebox m_jukebox;
