@@ -3,15 +3,15 @@ build:
 	python -m build
 
 lint:
-	python -m pip install '.[lint]'
+	python -m pip install -v '.[lint]'
 	python -m ruff check .
 
 format:
-	python -m pip install '.[lint]'
+	python -m pip install -v '.[lint]'
 	python -m ruff format .
 
 test:
-	python -m pip install '.[test]'
+	python -m pip install -v '.[test]'
 	python -m pytest
 
 docs:

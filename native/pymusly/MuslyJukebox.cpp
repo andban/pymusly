@@ -1,120 +1,100 @@
 #include "MuslyJukebox.h"
 #include "musly_error.h"
 
+#include <exception>
+#include <musly/musly.h>
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
-#include <musly/musly.h>
-#include <exception>
 #include <string>
 
 #include <iostream>
 
 namespace py = pybind11;
 
-
-namespace
-{
+namespace {
 
 const uint32_t _ENDIAN_MAGIC_NUMBER = 0x01020304;
 
-} // private namespace
-
+} // namespace
 
 MuslyJukebox::MuslyJukebox(const char* method, const char* decoder)
 {
     m_jukebox = musly_jukebox_poweron(method, decoder);
-    if (m_jukebox == nullptr)
-    {
+    if (m_jukebox == nullptr) {
         throw musly_error("failed to initialize musly jukebox");
     }
 }
 
 MuslyJukebox::~MuslyJukebox()
 {
-    if (m_jukebox != nullptr)
-    {
+    if (m_jukebox != nullptr) {
         musly_jukebox_poweroff(m_jukebox);
         m_jukebox = nullptr;
     }
-
 }
 
-const char*
-MuslyJukebox::method() const
+const char* MuslyJukebox::method() const
 {
     return musly_jukebox_methodname(m_jukebox);
 }
 
-const char*
-MuslyJukebox::method_info() const
+const char* MuslyJukebox::method_info() const
 {
     return musly_jukebox_aboutmethod(m_jukebox);
 }
 
-const char*
-MuslyJukebox::decoder() const
+const char* MuslyJukebox::decoder() const
 {
     return musly_jukebox_decodername(m_jukebox);
 }
 
-int
-MuslyJukebox::track_size() const
+int MuslyJukebox::track_size() const
 {
     const int ret = musly_track_binsize(m_jukebox);
-    if (ret < 0)
-    {
+    if (ret < 0) {
         throw musly_error("could not get jukebox track size");
     }
 
     return ret;
 }
 
-int
-MuslyJukebox::track_count() const
+int MuslyJukebox::track_count() const
 {
     const int ret = musly_jukebox_trackcount(m_jukebox);
-    if (ret < 0)
-    {
+    if (ret < 0) {
         throw musly_error("could not get jukebox track count");
     }
     return ret;
 }
 
-musly_trackid
-MuslyJukebox::highest_track_id() const
+musly_trackid MuslyJukebox::highest_track_id() const
 {
     const int ret = musly_jukebox_maxtrackid(m_jukebox);
-    if (ret < 0)
-    {
+    if (ret < 0) {
         throw musly_error("could not get last track id from jukebox");
     }
     return ret;
 }
 
-MuslyJukebox::musly_trackid_vec
-MuslyJukebox::track_ids() const
+MuslyJukebox::musly_trackid_vec MuslyJukebox::track_ids() const
 {
     MuslyJukebox::musly_trackid_vec track_ids(track_count());
     const int ret = musly_jukebox_gettrackids(m_jukebox, track_ids.data());
-    if (ret < 0)
-    {
+    if (ret < 0) {
         throw musly_error("could not get track ids from jukebox");
     }
 
     return track_ids;
 }
 
-MuslyTrack*
-MuslyJukebox::track_from_audiofile(const char* filename, int length, int start)
+MuslyTrack* MuslyJukebox::track_from_audiofile(const char* filename, int length, int start)
 {
     musly_track* track = musly_track_alloc(m_jukebox);
-    if (track == nullptr)
-    {
+    if (track == nullptr) {
         throw musly_error("could not allocate track");
     }
 
-    if (musly_track_analyze_audiofile(m_jukebox, filename, length, start, track) < 0)
-    {
+    if (musly_track_analyze_audiofile(m_jukebox, filename, length, start, track) < 0) {
         std::string message("could not load track from audio file: ");
         message += filename;
 
@@ -124,173 +104,122 @@ MuslyJukebox::track_from_audiofile(const char* filename, int length, int start)
     return new MuslyTrack(track);
 }
 
-MuslyTrack*
-MuslyJukebox::track_from_audiodata(const std::vector<float>& pcm_data)
+MuslyTrack* MuslyJukebox::track_from_audiodata(const std::vector<float>& pcm_data)
 {
     musly_track* track = musly_track_alloc(m_jukebox);
-    if (track == nullptr)
-    {
+    if (track == nullptr) {
         throw musly_error("could not allocate track");
     }
 
-    if (musly_track_analyze_pcm(m_jukebox, const_cast<float*>(pcm_data.data()), pcm_data.size(), track) < 0)
-    {
+    if (musly_track_analyze_pcm(m_jukebox, const_cast<float*>(pcm_data.data()), pcm_data.size(), track) < 0) {
         throw musly_error("could not load track from pcm");
     }
 
     return new MuslyTrack(track);
 }
 
-MuslyJukebox::musly_trackid_vec
-MuslyJukebox::add_tracks(const musly_track_vec& tracks, const musly_trackid_vec& track_ids)
+MuslyJukebox::musly_trackid_vec MuslyJukebox::add_tracks(const musly_track_vec& tracks,
+    const musly_trackid_vec& track_ids)
 {
-    if (tracks.size() != track_ids.size())
-    {
+    if (tracks.size() != track_ids.size()) {
         throw musly_error("track_list and track_id_list must have same number of elements");
     }
 
     std::vector<musly_track*> musly_tracks(tracks.size());
-    std::transform(
-            tracks.begin(),
-            tracks.end(),
-            musly_tracks.begin(),
-            [](MuslyTrack* track) { return track->data(); });
+    std::transform(tracks.begin(), tracks.end(), musly_tracks.begin(), [](MuslyTrack* track) { return track->data(); });
 
-    int ret = musly_jukebox_addtracks(
-        m_jukebox,
-        const_cast<musly_track**>(musly_tracks.data()),
-        const_cast<musly_trackid*>(track_ids.data()),
-        tracks.size(),
-        0
-    );
-    if (ret < 0)
-    {
-        throw musly_error("pymusly: failure while adding tracks to jukebox. maybe set_style was not called before?");
+    int ret = musly_jukebox_addtracks(m_jukebox, const_cast<musly_track**>(musly_tracks.data()),
+        const_cast<musly_trackid*>(track_ids.data()), tracks.size(), 0);
+    if (ret < 0) {
+        throw musly_error("pymusly: failure while adding tracks to jukebox. "
+                          "maybe set_style was not called before?");
     }
 
     return track_ids;
 }
 
-void
-MuslyJukebox::remove_tracks(const musly_trackid_vec& track_ids)
+void MuslyJukebox::remove_tracks(const musly_trackid_vec& track_ids)
 {
-    if (musly_jukebox_removetracks(
-            m_jukebox,
-            const_cast<musly_trackid*>(track_ids.data()),
-            track_ids.size()
-    ) < 0) {
+    if (musly_jukebox_removetracks(m_jukebox, const_cast<musly_trackid*>(track_ids.data()), track_ids.size()) < 0) {
         throw musly_error("pymusly: failure while removing tracks from jukebox");
     }
 }
 
-void
-MuslyJukebox::set_style(const musly_track_vec& tracks)
+void MuslyJukebox::set_style(const musly_track_vec& tracks)
 {
     std::vector<musly_track*> musly_tracks(tracks.size());
-    std::transform(
-            tracks.begin(),
-            tracks.end(),
-            musly_tracks.begin(),
-            [](MuslyTrack* track) { return track->data(); });
+    std::transform(tracks.begin(), tracks.end(), musly_tracks.begin(), [](MuslyTrack* track) { return track->data(); });
 
-    int ret = musly_jukebox_setmusicstyle(
-            m_jukebox,
-            const_cast<musly_track**>(musly_tracks.data()),
-            tracks.size());
-    if (ret < 0)
-    {
+    int ret = musly_jukebox_setmusicstyle(m_jukebox, const_cast<musly_track**>(musly_tracks.data()), tracks.size());
+    if (ret < 0) {
         throw musly_error("pymusly: failure while setting style of jukebox");
     }
 }
 
-std::vector<float>
-MuslyJukebox::compute_similarity(MuslyTrack* seed_track,
-                                 musly_trackid seed_track_id,
-                                 const musly_track_vec& tracks,
-                                 const musly_trackid_vec& track_ids)
+std::vector<float> MuslyJukebox::compute_similarity(MuslyTrack* seed_track, musly_trackid seed_track_id,
+    const musly_track_vec& tracks, const musly_trackid_vec& track_ids)
 {
-    if (tracks.size() != track_ids.size())
-    {
+    if (tracks.size() != track_ids.size()) {
         throw musly_error("pymusly: tracks and track_ids must have same number of items");
     }
 
     std::vector<musly_track*> musly_tracks(tracks.size());
-    std::transform(
-            tracks.begin(),
-            tracks.end(),
-            musly_tracks.begin(),
-            [](MuslyTrack* track) { return track->data(); });
+    std::transform(tracks.begin(), tracks.end(), musly_tracks.begin(), [](MuslyTrack* track) { return track->data(); });
 
     std::vector<float> similarities(tracks.size(), 0.0F);
     int ret = musly_jukebox_similarity(
-        m_jukebox,
-        seed_track->data(),
-        seed_track_id,
-        const_cast<musly_track**>(musly_tracks.data()),
-        const_cast<musly_trackid*>(track_ids.data()),
-        tracks.size(),
-        similarities.data()
-    );
-    if (ret < 0)
-    {
+        m_jukebox, seed_track->data(), seed_track_id, const_cast<musly_track**>(musly_tracks.data()),
+        const_cast<musly_trackid*>(track_ids.data()), tracks.size(), similarities.data());
+    if (ret < 0) {
         throw musly_error("pymusly: failure while computing track similarity");
     }
 
     return similarities;
 }
 
-py::bytes
-MuslyJukebox::serialize_track(MuslyTrack* track)
+py::bytes MuslyJukebox::serialize_track(MuslyTrack* track)
 {
-    if (track == nullptr)
-    {
+    if (track == nullptr) {
         throw musly_error("pymusly: track must not be none");
     }
 
     char* bytes = new char[track_size()];
     int err = musly_track_tobin(m_jukebox, track->data(), reinterpret_cast<unsigned char*>(bytes));
-    if (err < 0)
-    {
-        delete [] bytes;
+    if (err < 0) {
+        delete[] bytes;
         throw musly_error("pymusly: failed to convert track to bytearray");
     }
 
     return py::bytes(bytes, track_size());
 }
 
-MuslyTrack*
-MuslyJukebox::deserialize_track(py::bytes bytes)
+MuslyTrack* MuslyJukebox::deserialize_track(py::bytes bytes)
 {
     musly_track* track = musly_track_alloc(m_jukebox);
-    if (track == nullptr)
-    {
+    if (track == nullptr) {
         throw musly_error("pymusly: could not allocate track");
     }
 
     int ret = musly_track_frombin(m_jukebox, reinterpret_cast<unsigned char*>(bytes.ptr()), track);
-    if (ret < 0)
-    {
+    if (ret < 0) {
         throw musly_error("pymusly: failed to convert bytearray to track");
     }
 
     return new MuslyTrack(track);
 }
 
-void
-MuslyJukebox::serialize(std::ostream& out_stream)
+void MuslyJukebox::serialize(std::ostream& out_stream)
 {
     const int tracks_per_chunk = 100;
 
     const int header_size = musly_jukebox_binsize(m_jukebox, 1, 0);
-    if (header_size < 0)
-    {
+    if (header_size < 0) {
         throw musly_error("pymusly: could not get jukebox header size");
     }
 
     // write current musly_version, sizeof(int) and known int value for
     // compatibility checks when deserializing the file at a later point in time
-    out_stream << musly_version() << '\0'
-      << (uint8_t) sizeof(int);
+    out_stream << musly_version() << '\0' << (uint8_t)sizeof(int);
     out_stream.write(reinterpret_cast<const char*>(&_ENDIAN_MAGIC_NUMBER), sizeof(int));
 
     // write method and decoder info
@@ -305,20 +234,17 @@ MuslyJukebox::serialize(std::ostream& out_stream)
     unsigned char* buffer = new unsigned char[buffer_length];
 
     std::string error;
-    if (musly_jukebox_tobin(m_jukebox, buffer, 1, 0, 0) < 0)
-    {
+    if (musly_jukebox_tobin(m_jukebox, buffer, 1, 0, 0) < 0) {
         error = "pymusly: could not serialize jukebox header";
         goto cleanup;
     }
     out_stream.write(reinterpret_cast<const char*>(&header_size), 4);
     out_stream.write(reinterpret_cast<const char*>(buffer), header_size);
 
-    while (tracks_written < total_tracks_to_write)
-    {
+    while (tracks_written < total_tracks_to_write) {
         tracks_to_write = std::min(tracks_per_chunk, total_tracks_to_write - tracks_written);
         bytes_written = musly_jukebox_tobin(m_jukebox, buffer, 0, tracks_to_write, tracks_written);
-        if (bytes_written < 0)
-        {
+        if (bytes_written < 0) {
             error = "failed to write data into buffer";
             goto cleanup;
         }
@@ -327,36 +253,31 @@ MuslyJukebox::serialize(std::ostream& out_stream)
     }
 
 cleanup:
-    delete [] buffer;
+    delete[] buffer;
     out_stream.flush();
 
-    if (!error.empty())
-    {
+    if (!error.empty()) {
         throw musly_error(error);
     }
 }
 
-MuslyJukebox*
-MuslyJukebox::create_from_stream(std::istream& in_stream, bool ignore_decoder)
+MuslyJukebox* MuslyJukebox::create_from_stream(std::istream& in_stream, bool ignore_decoder)
 {
     std::string read_version;
     std::getline(in_stream, read_version, '\0');
-    if (read_version.empty() || read_version != musly_version())
-    {
+    if (read_version.empty() || read_version != musly_version()) {
         throw musly_error("version not compatible");
     }
 
     uint8_t int_size;
     in_stream.read(reinterpret_cast<char*>(&int_size), sizeof(uint8_t));
-    if (int_size != sizeof(int))
-    {
+    if (int_size != sizeof(int)) {
         throw musly_error("invalid integer size");
     }
 
     unsigned int byte_order;
     in_stream.read(reinterpret_cast<char*>(&byte_order), sizeof(int));
-    if (byte_order != _ENDIAN_MAGIC_NUMBER)
-    {
+    if (byte_order != _ENDIAN_MAGIC_NUMBER) {
         throw musly_error("invalid byte order");
     }
 
@@ -368,18 +289,13 @@ MuslyJukebox::create_from_stream(std::istream& in_stream, bool ignore_decoder)
     std::string decoder;
     std::getline(in_stream, decoder, '\0');
 
-    if (decoder.empty() || decoders.find(decoder) == std::string::npos)
-    {
-        if (!ignore_decoder)
-        {
+    if (decoder.empty() || decoders.find(decoder) == std::string::npos) {
+        if (!ignore_decoder) {
             throw musly_error("pymusly: decoder not supported with the current libmusly: " + decoder);
         }
         decoder = "";
     }
-    MuslyJukebox* jukebox = new MuslyJukebox(
-            method.c_str(),
-            decoder.empty() ? nullptr : decoder.c_str()
-    );
+    MuslyJukebox* jukebox = new MuslyJukebox(method.c_str(), decoder.empty() ? nullptr : decoder.c_str());
 
     int track_size = musly_jukebox_binsize(jukebox->m_jukebox, 0, 1);
     int header_size;
@@ -388,9 +304,8 @@ MuslyJukebox::create_from_stream(std::istream& in_stream, bool ignore_decoder)
     unsigned char* header = new unsigned char[header_size];
     in_stream.read(reinterpret_cast<char*>(header), header_size);
     int track_count = musly_jukebox_frombin(jukebox->m_jukebox, header, 1, 0);
-    delete [] header;
-    if (track_count < 0)
-    {
+    delete[] header;
+    if (track_count < 0) {
         delete jukebox;
         throw musly_error("invalid header");
     }
@@ -398,22 +313,19 @@ MuslyJukebox::create_from_stream(std::istream& in_stream, bool ignore_decoder)
     const int tracks_per_chunk = 100;
     int buffer_len = track_size * tracks_per_chunk;
     unsigned char* buffer = new unsigned char[buffer_len];
-   
+
     int tracks_read = 0;
     int tracks_to_read = 0;
-    while (tracks_read < track_count)
-    {
+    while (tracks_read < track_count) {
         tracks_to_read = std::min(tracks_per_chunk, track_count - tracks_read);
         in_stream.read(reinterpret_cast<char*>(buffer), tracks_to_read * track_size);
-        if (in_stream.fail())
-        {
-            delete [] buffer;
+        if (in_stream.fail()) {
+            delete[] buffer;
             delete jukebox;
             throw musly_error("received less tracks than expected");
         }
-        if (musly_jukebox_frombin(jukebox->m_jukebox, buffer, 0, tracks_to_read) < 0)
-        {
-            delete [] buffer;
+        if (musly_jukebox_frombin(jukebox->m_jukebox, buffer, 0, tracks_to_read) < 0) {
+            delete[] buffer;
             delete jukebox;
             throw musly_error("failed to load track information");
         }
@@ -421,13 +333,12 @@ MuslyJukebox::create_from_stream(std::istream& in_stream, bool ignore_decoder)
         tracks_read += tracks_to_read;
     }
 
-    delete [] buffer;
+    delete[] buffer;
 
     return jukebox;
 }
 
-void
-MuslyJukebox::register_class(py::module_& module)
+void MuslyJukebox::register_class(py::module_& module)
 {
 
     py::class_<MuslyJukebox>(module, "MuslyJukebox")
@@ -446,7 +357,8 @@ MuslyJukebox::register_class(py::module_& module)
                 If `None`, a default decoder is used.
         )pbdoc")
 
-        .def_static("create_from_stream", &MuslyJukebox::create_from_stream, py::arg("input_stream"), py::arg("ignore_decoder"), py::return_value_policy::take_ownership, R"pbdoc(
+        .def_static("create_from_stream", &MuslyJukebox::create_from_stream, py::arg("input_stream"),
+            py::arg("ignore_decoder"), py::return_value_policy::take_ownership, R"pbdoc(
             Load previously serialized MuslyJukebox from an io.BytesIO stream.
 
             :param stream:
@@ -487,7 +399,8 @@ MuslyJukebox::register_class(py::module_& module)
             A list of all track ids assigned to tracks added to this jukebox instance.
         )pbdoc")
 
-        .def("track_from_audiofile", &MuslyJukebox::track_from_audiofile, py::arg("input_stream"), py::arg("length"), py::arg("start"), py::return_value_policy::take_ownership, R"pbdoc(
+        .def("track_from_audiofile", &MuslyJukebox::track_from_audiofile, py::arg("input_stream"), py::arg("length"),
+            py::arg("start"), py::return_value_policy::take_ownership, R"pbdoc(
             Create a MuslyTrack by analysing an excerpt of the given audio file.
 
             The audio file is decoded by using the decoder selected during MuslyJukebox creation. The decoded audio signal is then down- and resampled into a 20,050Hz mono signal which is used as input for track_from_audiodata().
@@ -498,7 +411,8 @@ MuslyJukebox::register_class(py::module_& module)
                 when True, the resulting jukebox will use the default decoder, when the original decoder is not available.
         )pbdoc")
 
-        .def("track_from_audiodata", &MuslyJukebox::track_from_audiodata, py::arg("pcm_data"), py::return_value_policy::take_ownership, R"pbdoc(
+        .def("track_from_audiodata", &MuslyJukebox::track_from_audiodata, py::arg("pcm_data"),
+            py::return_value_policy::take_ownership, R"pbdoc(
             Create a MuslyTrack by analyzing the provided PCM samples.
 
             The input samples are expected to represent a mono signal with 22050Hz sample rate using float values.
@@ -507,14 +421,16 @@ MuslyJukebox::register_class(py::module_& module)
                 the sample data to analyze.
         )pbdoc")
 
-        .def("serialize_track", &MuslyJukebox::serialize_track, py::arg("track"), py::return_value_policy::take_ownership, R"pbdoc(
+        .def("serialize_track", &MuslyJukebox::serialize_track, py::arg("track"),
+            py::return_value_policy::take_ownership, R"pbdoc(
             Serialize a MuslyTrack into a `bytes` object.
 
             :param track:
                 a MuslyTrack object.
         )pbdoc")
 
-        .def("deserialize_track", &MuslyJukebox::deserialize_track, py::arg("bytes_track"), py::return_value_policy::take_ownership, R"pbdoc(
+        .def("deserialize_track", &MuslyJukebox::deserialize_track, py::arg("bytes_track"),
+            py::return_value_policy::take_ownership, R"pbdoc(
             Deserialize a MuslyTrack from a `bytes` object.
 
             :param bytes_track:
@@ -558,7 +474,8 @@ MuslyJukebox::register_class(py::module_& module)
                 a list of track ids that belong to previously added tracks.
         )pbdoc")
 
-        .def("compute_similarity", &MuslyJukebox::compute_similarity, py::arg("seed_track"), py::arg("seed_track_id"), py::arg("tracks"), py::arg("track_ids"), R"pbdoc(
+        .def("compute_similarity", &MuslyJukebox::compute_similarity, py::arg("seed_track"), py::arg("seed_track_id"),
+            py::arg("tracks"), py::arg("track_ids"), R"pbdoc(
             Compute the similarity between a seed track and a list of other tracks.
 
             To compute similarities between two music tracks, the following steps have to been taken:

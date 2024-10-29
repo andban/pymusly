@@ -1,14 +1,11 @@
 #include "MuslyTrack.h"
 
-#include <musly/musly.h>
 #include <iostream>
-
+#include <musly/musly.h>
 
 namespace py = pybind11;
 
-
-void
-MuslyTrack::register_class(py::module_& module)
+void MuslyTrack::register_class(py::module_& module)
 {
     py::class_<MuslyTrack>(module, "MuslyTrack", "Musly track data");
 }
@@ -25,8 +22,7 @@ MuslyTrack::~MuslyTrack()
     m_track = nullptr;
 }
 
-musly_track*
-MuslyTrack::data() const
+musly_track* MuslyTrack::data() const
 {
     return m_track;
 }

@@ -1,17 +1,17 @@
-#include "MuslyTrack.h"
 #include "MuslyJukebox.h"
+#include "MuslyTrack.h"
 #include "musly_error.h"
 
-#include <pybind11/pybind11.h>
 #include <musly/musly.h>
-
+#include <pybind11/pybind11.h>
 
 #define STRINGIFY(x) #x
 #define MACRO_STRINGIFY(x) STRINGIFY(x)
 
 namespace py = pybind11;
 
-PYBIND11_MODULE(_pymusly, module) {
+PYBIND11_MODULE(_pymusly, module)
+{
 
     module.def("get_musly_version", musly_version, R"pbdoc(
         Return the version of Musly.
