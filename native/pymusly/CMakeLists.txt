@@ -1,5 +1,3 @@
-find_package(Python REQUIRED COMPONENTS Interpreter Development.Module)
-find_package(pybind11 CONFIG REQUIRED)
 
 python_add_library(_pymusly MODULE main.cpp MuslyJukebox.cpp MuslyTrack.cpp WITH_SOABI)
 target_link_libraries(_pymusly PRIVATE pybind11::headers Musly::libmusly)
@@ -13,7 +11,7 @@ install(
   RUNTIME DESTINATION pymusly
 )
 
-install(FILES $<TARGET_FILE:libmusly> DESTINATION pymusly)
+install(FILES $<TARGET_FILE:Musly::libmusly> DESTINATION pymusly)
 set_target_properties(_pymusly PROPERTIES INSTALL_RPATH_USE_LINK_PATH TRUE)
 
 if(${SKBUILD_STATE} STREQUAL "wheel")

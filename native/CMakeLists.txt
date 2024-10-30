@@ -26,11 +26,14 @@ set(LIB_INSTALL_DESTINATION "pymusly")
 # make sure Musly library is present
 include(FetchContent)
 
+find_package(Python REQUIRED COMPONENTS Interpreter Development.Module)
+find_package(pybind11 CONFIG REQUIRED)
+
 FetchContent_Declare(
   Musly
   GIT_REPOSITORY https://github.com/andban/musly.git
   GIT_TAG origin/feat/modernized-build-scripts
-  DOWNLOAD_EXTRACT_TIMESTAMP TRUE EXCLUDE_FROM_ALL
+  DOWNLOAD_EXTRACT_TIMESTAMP TRUE EXCLUDE_FROM_ALL FIND_PACKAGE_ARGS
 )
 
 FetchContent_MakeAvailable(Musly)
