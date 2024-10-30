@@ -4,6 +4,7 @@ wheelhouse/
 docs/_build/
 
 # local stuff
+.DS_Store
 .envrc
 .direnv/
 .idea/

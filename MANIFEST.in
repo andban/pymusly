@@ -1,0 +1,11 @@
+include LICENSE.txt README.md pyproject.toml setup.py
+
+recursive-include src/pymusly *.py
+recursive-include native *
+
+# exclude general clutter
+global-exclude .DS_Store
+recursive-exclude .github *
+
+prune tests
+
