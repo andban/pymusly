@@ -9,7 +9,7 @@ build-backend = "scikit_build_core.build"
 [project]
 name = "pymusly"
 version = "0.1.0"
-description = "Python bindings for libmusly to perform music similarity computation."
+description = "Python bindings to libmusly for performing music similarity computation."
 readme = "README.md"
 license = { file = "LICENSE.txt" }
 authors = [
@@ -27,6 +27,9 @@ classifiers = [
     "Programming Language :: Python :: 3.13",
 ]
 
+[project.urls]
+Repository = "https://github.com/andban/pymusly.git"
+Issues = "https://github.com/andban/pymusly/issues"
 
 [project.optional-dependencies]
 docs = [
