@@ -1,9 +1,9 @@
 name: Build
 
 on:
-  workflow_run:
-    workflows: [ "Run Tests" ]
-    types: [ completed ]
+  #workflow_run:
+  #  workflows: [ "Run Tests" ]
+  #  types: [ completed ]
   release:
     types: [ created ]
   push:
@@ -33,7 +33,7 @@ jobs:
   build_sdist:
     name: Build source distribution
     runs-on: ubuntu-latest
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    #if: ${{ github.event.workflow_run.conclusion == 'success' }}
     steps:
       - uses: actions/checkout@v3
 
@@ -51,7 +51,7 @@ jobs:
   build_wheels:
     name: Build wheel on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    #if: ${{ github.event.workflow_run.conclusion == 'success' }}
     strategy:
       matrix:
         os: [ ubuntu-latest, windows-latest, macos-14 ]
@@ -66,7 +66,7 @@ jobs:
           CIBW_ARCHS_MACOS: auto
           CIBW_ARCHS_LINUX: x86_64
           CIBW_ARCHS_WINDOWS: AMD64
-
+          CIBW_ENVIRIONMENT: "RUNNER_TEMP=${{ runner.temp }}"
       - name: Upload wheels
         uses: actions/upload-artifact@v4
         with:
