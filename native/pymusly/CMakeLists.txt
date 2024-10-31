@@ -1,5 +1,5 @@
-
 python_add_library(_pymusly MODULE main.cpp MuslyJukebox.cpp MuslyTrack.cpp WITH_SOABI)
+
 target_link_libraries(_pymusly PRIVATE pybind11::headers Musly::libmusly)
 target_include_directories(_pymusly PRIVATE Musly::libmusly)
 
