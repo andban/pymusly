@@ -200,7 +200,7 @@ MuslyTrack* MuslyJukebox::deserialize_track(py::bytes bytes)
         throw musly_error("pymusly: could not allocate track");
     }
 
-    int ret = musly_track_frombin(m_jukebox, reinterpret_cast<unsigned char*>(bytes.ptr()), track);
+    int ret = musly_track_frombin(m_jukebox, reinterpret_cast<unsigned char*>(PyBytes_AsString(bytes.ptr())), track);
     if (ret < 0) {
         throw musly_error("pymusly: failed to convert bytearray to track");
     }
