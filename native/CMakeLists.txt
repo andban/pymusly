@@ -29,10 +29,12 @@ include(FetchContent)
 find_package(Python REQUIRED COMPONENTS Interpreter Development.Module)
 find_package(pybind11 CONFIG REQUIRED)
 
+set(MUSLY_USE_OWN_LIBRESAMPLE TRUE)
+set(MUSLY_USE_OWN_LIBKISSFFT TRUE)
 FetchContent_Declare(
   Musly
   GIT_REPOSITORY https://github.com/andban/musly.git
-  GIT_TAG origin/feat/modernized-build-scripts
+  GIT_TAG 1f98bf8af82f4e1f87581e274854d1d20e1603d5
   DOWNLOAD_EXTRACT_TIMESTAMP TRUE EXCLUDE_FROM_ALL FIND_PACKAGE_ARGS
 )
 

@@ -63,31 +63,6 @@ manylinux-aarch64-image = "manylinux_2_28"
 musllinux-x86_64-image = "musllinux_1_2"
 musllinux-aarch64-image = "musllinux_1_2"
 
-[tool.cibuildwheel.linux]
-before-all = [
-    "RUNNER_TEMP=$(bash -c 'echo $RUNNER_TEMP')",
-    "curl -SL https://github.com/andban/musly/archive/refs/heads/feat/modernized-build-scripts.tar.gz | tar -xzC $RUNNER_TEMP",
-    "cd $RUNNER_TEMP/musly-feat-modernized-build-scripts",
-    "cmake -S . -B build",
-    "cmake --build build",
-    "cmake --install build"
-]
-
-[tool.cibuildwheel.macos]
-before-all = [
-    "RUNNER_TEMP=$(bash -c 'echo $RUNNER_TEMP')",
-    "curl -SL https://github.com/andban/musly/archive/refs/heads/feat/modernized-build-scripts.tar.gz | tar -xzC $RUNNER_TEMP",
-    "cd $RUNNER_TEMP/musly-feat-modernized-build-scripts",
-    "cmake -S . -B build",
-    "cmake --build build",
-    "cmake --install build"
-]
-
-[tool.cibuildwheel.windows]
-before-all = [
-    "pwsh -Command { curl -SL https://github.com/andban/musly/archive/refs/heads/feat/modernized-build-scripts.tar.gz | tar -f - -xzC $env:RUNNER_TEMP ; cd $env:RUNNER_TEMP/musly-feat-modernized-build-scripts && cmake -S . -B build && cmake --build build && cmake --install build }"
-]
-
 [tool.pytest.ini_options]
 minversion = 8.0
 addopts = [

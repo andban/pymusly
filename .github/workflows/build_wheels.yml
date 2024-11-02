@@ -59,6 +59,21 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
+      - uses: seanmiddleditch/gha-setup-ninja@v5
+        if: ${{ matrix.os == 'windows-latest' }}
+
+      - name: Build libmusly
+        if: ${{ matrix.os == 'windows-latest' }}
+        shell: bash
+        run: |
+          curl -SL https://github.com/andban/musly/archive/1f98bf8af82f4e1f87581e274854d1d20e1603d5.zip -o $RUNNER_TEMP/musly.zip
+          cd $RUNNER_TEMP
+          7z x musly.zip
+          cd musly-1f98bf8af82f4e1f87581e274854d1d20e1603d5
+          cmake -G Ninja -S . -B build -DMUSLY_USE_OWN_LIBRESAMPLE=TRUE -DMUSLY_USE_OWN_LIBKISSFFT=TRUE
+          cmake --build build --config Release
+          cmake --install build
+
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.21.3
         env:
@@ -66,7 +81,6 @@ jobs:
           CIBW_ARCHS_MACOS: auto
           CIBW_ARCHS_LINUX: x86_64
           CIBW_ARCHS_WINDOWS: AMD64
-          CIBW_ENVIRIONMENT: "RUNNER_TEMP=${{ runner.temp }}"
       - name: Upload wheels
         uses: actions/upload-artifact@v4
         with:
