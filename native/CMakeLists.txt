@@ -15,11 +15,18 @@ set(CMAKE_C_EXTENSIONS OFF)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+set(CMAKE_CXX_VISIBILITY_PRESET hidden)
+set(CMAKE_VISIBILITY_INLINES_HIDDEN ON)
+
 # Common installation directories
 include(GNUInstallDirs)
 
 # Use -fPIC even if statically compiled
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+
+if(WIN32)
+  set(CMAKE_INTERPROCEDURAL_OPTIMIZATIONS OFF)
+endif()
 
 set(LIB_INSTALL_DESTINATION "pymusly")
 
@@ -34,10 +41,9 @@ set(MUSLY_USE_OWN_LIBKISSFFT TRUE)
 FetchContent_Declare(
   Musly
   GIT_REPOSITORY https://github.com/andban/musly.git
-  GIT_TAG 1f98bf8af82f4e1f87581e274854d1d20e1603d5
+  GIT_TAG 85ff8e958d730c60e5b1131533ff0c4a472984b0
   DOWNLOAD_EXTRACT_TIMESTAMP TRUE EXCLUDE_FROM_ALL FIND_PACKAGE_ARGS
 )
-
 FetchContent_MakeAvailable(Musly)
 
 add_subdirectory(pymusly)

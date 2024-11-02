@@ -3,9 +3,13 @@ build/
 wheelhouse/
 docs/_build/
 
+**/__pycache__/
+.pytest_cache/
+
 # local stuff
 .DS_Store
 .envrc
 .direnv/
 .idea/
 .vscode/
+.venv/

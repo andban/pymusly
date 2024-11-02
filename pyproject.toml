@@ -32,14 +32,17 @@ Repository = "https://github.com/andban/pymusly.git"
 Issues = "https://github.com/andban/pymusly/issues"
 
 [project.optional-dependencies]
-docs = [
+doc = [
     "sphinx ~= 7.4.7"
 ]
-lint = [
-    "ruff ~= 0.6.9"
-]
-test = [
-    "pytest-cov ~= 5.0.0"
+dev = [
+    "cmakelang ~= 0.6.13",
+    "gcovr ~= 8.2",
+    "pytest ~= 8.3.3",
+    "pytest-cov ~= 6.0.0",
+    "pytest-mock ~= 3.14.0",
+    "PyYAML==6.0.2", # needed to load cmake-format config
+    "ruff ~= 0.6.9",
 ]
 
 [tool.scikit-build]
@@ -69,13 +72,6 @@ addopts = [
     "-ra",
     "--showlocals",
     "--strict-markers",
-    "--strict-config"
-]
-xfail_strict = true
-filterwarnings = [
-    "error",
-    "ignore::pytest.PytestCacheWarning"
-]
-testpaths = [
-    "tests"
+    "--strict-config",
+    "--import-mode=importlib"
 ]

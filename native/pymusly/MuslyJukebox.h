@@ -1,9 +1,9 @@
 #ifndef MUSLY_JUKEBOX_H_
 #define MUSLY_JUKEBOX_H_
 
+#include "BytesIO.h"
 #include "MuslyTrack.h"
 #include "common.h"
-#include "pystream.h"
 
 #include <pybind11/pybind11.h>
 #include <pybind11/stl_bind.h>
@@ -12,13 +12,14 @@
 #include <musly/musly_types.h>
 #include <vector>
 
+namespace pymusly {
+
 class PYMUSLY_EXPORT MuslyJukebox {
 public:
-    typedef std::vector<MuslyTrack*> musly_track_vec;
-    typedef std::vector<musly_trackid> musly_trackid_vec;
+    typedef std::pair<musly_trackid, MuslyTrack*> track_tuple_t;
 
 public:
-    static MuslyJukebox* create_from_stream(std::istream& in_stream, bool ignore_decoder = true);
+    static MuslyJukebox* create_from_stream(pymusly::BytesIO& in_stream, bool ignore_decoder = true);
 
     static void register_class(pybind11::module_& module);
 
@@ -42,29 +43,28 @@ public:
 
     pybind11::bytes serialize_track(MuslyTrack* track);
 
-    void set_style(const musly_track_vec& tracks);
+    void set_style(const std::vector<MuslyTrack*>& tracks);
 
     int track_count() const;
 
-    musly_trackid_vec track_ids() const;
+    std::vector<musly_trackid> track_ids() const;
 
     musly_trackid highest_track_id() const;
 
-    musly_trackid_vec add_tracks(const musly_track_vec& tracks, const musly_trackid_vec& track_ids);
+    std::vector<musly_trackid> add_tracks(const std::vector<MuslyTrack*>& tracks);
 
-    void remove_tracks(const musly_trackid_vec& track_ids);
+    std::vector<musly_trackid> add_tracks(const std::vector<track_tuple_t>& tracks);
 
-    musly_trackid_vec guess_neighbors(musly_trackid seed_track_id, int n);
+    void remove_tracks(const std::vector<musly_trackid>& track_ids);
 
-    musly_trackid_vec guess_neighbors(musly_trackid seed_track_id, int n, const musly_trackid_vec& track_ids);
+    std::vector<float> compute_similarity(track_tuple_t seed, const std::vector<track_tuple_t>& track_tuples);
 
-    std::vector<float> compute_similarity(MuslyTrack* seed_track, musly_trackid seed_track_id,
-        const musly_track_vec& tracks, const musly_trackid_vec& track_ids);
-
-    void serialize(std::ostream& out_stream);
+    void serialize(pymusly::BytesIO& out_stream);
 
 private:
     musly_jukebox m_jukebox;
 };
+
+} // namespace pymusly
 
 #endif // !MUSLY_JUKEBOX_H_

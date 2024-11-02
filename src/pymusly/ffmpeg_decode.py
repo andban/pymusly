@@ -47,7 +47,7 @@ def _popen_avconv(cli_args: List[str], *args, **kwargs):
     raise MuslyError(f"no ffmpeg command found, tried: {_ffmpeg_commands}")
 
 
-def _run_avprope(cli_args, *args, **kwargs):
+def _run_avprobe(cli_args, *args, **kwargs):
     for cmd in _ffprobe_commands:
         cmd_with_args = [cmd] + cli_args
         try:
@@ -150,13 +150,14 @@ def _decode_with_ffmpeg(filename: str, start: float, length: float):
 
 def _duration_with_ffprobe(filename: str):
     args = [
+        "-v", "quiet",
         "-print_format", "flat",
-        "-show_format_entry", "duration",
+        "-show_entries", "format=duration",
         filename,
     ]  # fmt: skip
 
     try:
-        result = _run_avprope(args, capture_output=True, text=True)
+        result = _run_avprobe(args, capture_output=True, text=True)
     except Exception as e:
         raise MuslyError(f"failure while calling ffprobe: {e}")
 
@@ -168,3 +169,15 @@ def _duration_with_ffprobe(filename: str):
         raise MuslyError(f"failed parse ffprobe output: {result.stdout}")
 
     return float(match.group("duration"))
+
+
+def _ffmpeg_present():
+    try:
+        result = _run_avprobe(["-version"], capture_output=True, text=True)
+    except Exception:
+        return False
+
+    if result.returncode != 0:
+        return False
+
+    return True
