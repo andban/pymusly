@@ -94,7 +94,7 @@ MuslyTrack* MuslyJukebox::track_from_audiofile(const char* filename, int length,
         throw musly_error("could not allocate track");
     }
 
-    if (musly_track_analyze_audiofile(m_jukebox, filename, length, start, track) < 0) {
+    if (musly_track_analyze_audiofile(m_jukebox, filename, length, start, track) != 0) {
         std::string message("could not load track from audio file: ");
         message += filename;
 
@@ -111,7 +111,7 @@ MuslyTrack* MuslyJukebox::track_from_audiodata(const std::vector<float>& pcm_dat
         throw musly_error("could not allocate track");
     }
 
-    if (musly_track_analyze_pcm(m_jukebox, const_cast<float*>(pcm_data.data()), pcm_data.size(), track) < 0) {
+    if (musly_track_analyze_pcm(m_jukebox, const_cast<float*>(pcm_data.data()), pcm_data.size(), track) != 0) {
         throw musly_error("could not load track from pcm");
     }
 
