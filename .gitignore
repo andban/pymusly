@@ -2,6 +2,7 @@ dist/
 build/
 wheelhouse/
 docs/_build/
+coverage/
 
 **/__pycache__/
 .pytest_cache/

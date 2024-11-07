@@ -62,7 +62,7 @@ public:
     void serialize(pymusly::BytesIO& out_stream);
 
 private:
-    musly_jukebox m_jukebox;
+    musly_jukebox* m_jukebox;
 };
 
 } // namespace pymusly

@@ -6,7 +6,7 @@ install-dev:
 	python -m pip install -ve . \
 		-Ccmake.define.CMAKE_EXPORT_COMPILE_COMMANDS=1 \
 		-Cbuild-dir=build \
-		-Ccmake.build-type=Debug \
+		-Ccmake.build-type=Profile \
 		-Cbuild.verbose=true
 
 
@@ -23,16 +23,28 @@ format:
 	cmake-format -i native/**/CMakeLists.txt
 
 tests:
+	@command -v pytest >/dev/null || python -m pip install -v '.[dev]'
+	python -m pytest --cov=pymusly
+
+coverage:
+	@(command -v lcov >/dev/null && command -v genhtml >/dev/null) || (echo "please install 'lcov' and 'genhtml'" && exit 1)
 	python -m pip install -v '.[dev]' \
 		-Cbuild-dir=build \
 		-Ccmake.build-type=Profile \
 		-Cbuild.verbose=true
-	python -m pytest --cov=pymusly --cov-report=term
-	gcovr --config .gcovrrc -d build
+	lcov --zerocounter --directory build/
+	python -m pytest --cov=pymusly --cov-report=term --cov-report=lcov
+	lcov --capture \
+		--directory build/ \
+		--include "${PWD}/native/*" \
+		--fail-under-lines 80 \
+		-o build/coverage-cpp.info
+	genhtml build/coverage-*.info --output-directory coverage
+
 
 docs:
 	@command -v sphinx-build >/dev/null || python -m pip install '.[doc]'
 	cd docs && make html
 
 
-.PHONY: build tests install install-dev docs format lint
+.PHONY: build coverage tests install install-dev docs format lint
