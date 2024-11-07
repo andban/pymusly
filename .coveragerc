@@ -1,0 +1,12 @@
+[run]
+source = pymusly
+omit =
+    */setup.py
+data_file = build/pytest.data
+
+[report]
+fail_under = 80
+
+[lcov]
+output = build/coverage-python.info
+

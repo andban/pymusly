@@ -13,11 +13,12 @@ from ._pymusly import (
     MuslyError,
 )
 
-from .ffmpeg_decode import _duration_with_ffprobe, _decode_with_ffmpeg
+from .ffmpeg_decode import _duration_with_ffprobe, _decode_with_ffmpeg, _ffmpeg_present
 
 __doc__ = """
     Python binding for the libmusly music similarity computation library.
 """
+
 
 def get_musly_methods() -> List[str]:
     """Return a list of all available similarity methods."""
@@ -34,8 +35,9 @@ def get_musly_decoders() -> List[str]:
 
 
 class MuslyJukebox(_OriginalMuslyJukebox):
-
-    def track_from_audiofile(self: _OriginalMuslyJukebox, filename: str, length: float, start: float = 0.0) -> MuslyTrack:
+    def track_from_audiofile(
+        self: _OriginalMuslyJukebox, filename: str, length: float, start: float = 0.0
+    ) -> MuslyTrack:
         """Create a MuslyTrack by analysing an excerpt of the given audio file.
 
         The audio file is decoded by using the decoder selected during MuslyJukebox creation.
@@ -58,6 +60,9 @@ class MuslyJukebox(_OriginalMuslyJukebox):
             return _OriginalMuslyJukebox.track_from_audiofile(
                 self, filename, length, start
             )
+
+        if not _ffmpeg_present():
+            raise MuslyError("jukebox has no decoder and no ffmpeg/avconv tools found")
 
         duration = _duration_with_ffprobe(filename)
         if length <= 0 or length >= duration:

@@ -7,25 +7,14 @@
 #include <pybind11/pybind11.h>
 #include <utility>
 
+namespace pymusly {
+
 class PYMUSLY_EXPORT MuslyTrack {
 public:
     static void register_class(pybind11::module_& module);
 
 public:
     MuslyTrack(musly_track* track);
-
-    MuslyTrack(MuslyTrack&& other)
-        : m_track(std::move(other.m_track))
-    {
-        other.m_track = nullptr;
-    }
-
-    MuslyTrack& operator=(MuslyTrack&& other)
-    {
-        m_track = std::move(other.m_track);
-        other.m_track = nullptr;
-        return *this;
-    }
 
     ~MuslyTrack();
 
@@ -37,7 +26,13 @@ public:
     }
 
 private:
+    MuslyTrack(MuslyTrack&& other) = delete;
+
+    MuslyTrack& operator=(MuslyTrack&& other) = delete;
+
     musly_track* m_track;
 };
+
+} // namespace pymusly
 
 #endif // !MUSLY_TRACK_H_

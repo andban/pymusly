@@ -1,39 +1,22 @@
 name: Build
 
 on:
-  workflow_run:
-    workflows: [ "Run Tests" ]
-    types: [ completed ]
-  release:
-    types: [ created ]
+  workflow_dispatch:  
   push:
-    branches: [ main ]
-    paths-ignore:
-      - 'docs/**'
-      - 'tests/**'
-      - .gitignore
-      - Makefile
-      - '*.md'
-      - '*.txt'
-      - '.github/workflows/*.yml'
-      - '!.github/workflows/build_wheels.yml'
-  pull_request:
-    branches: [ main ]
-    paths-ignore:
-      - 'docs/**'
-      - 'tests/**'
-      - .gitignore
-      - Makefile
-      - '*.md'
-      - '*.txt'
-      - '.github/workflows/*.yml'
-      - '!.github/workflows/build_wheels.yml'
+    branches:
+      - main
+    paths:
+      - "src/**"
+      - "native/**"
+      - ".github/workflows/build_wheels.yml"
+  release:
+    types:
+      - published
 
 jobs:
   build_sdist:
     name: Build source distribution
     runs-on: ubuntu-latest
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     steps:
       - uses: actions/checkout@v3
 
@@ -51,7 +34,6 @@ jobs:
   build_wheels:
     name: Build wheel on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     strategy:
       matrix:
         os: [ ubuntu-latest, windows-latest, macos-14 ]
@@ -64,13 +46,12 @@ jobs:
         run: |
           choco install ninja
 
-      - name: Build libmusly
-        if: ${{ matrix.os == 'windows-latest' }}
+      - name: Pre-build libmusly
         shell: bash
         run: |
           curl -SL https://github.com/andban/musly/archive/1f98bf8af82f4e1f87581e274854d1d20e1603d5.zip -o $RUNNER_TEMP/musly.zip
           cd $RUNNER_TEMP
-          7z x musly.zip
+          unzip musly.zip
           cd musly-1f98bf8af82f4e1f87581e274854d1d20e1603d5
           cmake -G Ninja -S . -B build -DMUSLY_USE_OWN_LIBRESAMPLE=TRUE -DMUSLY_USE_OWN_LIBKISSFFT=TRUE
           cmake --build build --config Release
@@ -83,6 +64,8 @@ jobs:
           CIBW_ARCHS_MACOS: auto
           CIBW_ARCHS_LINUX: x86_64
           CIBW_ARCHS_WINDOWS: AMD64
+          CIBW_ENVIRONMENT: CMAKE_GENERATOR=Ninja
+
       - name: Upload wheels
         uses: actions/upload-artifact@v4
         with:
@@ -90,16 +73,16 @@ jobs:
           path: ./wheelhouse/*.whl
 
   upload_wheels:
-    name: Upload wheels
+    name: Publish to PyPi
     needs: [build_wheels, build_sdist]
     runs-on: ubuntu-latest
+    if: github.event_name == 'release' && github.event.action == 'published'
+    
     environment:
       name: pypi
-      url: https://pypi.org/p/musly-binding
+      url: https://pypi.org/p/pymusly
     permissions:
       id-token: write
-
-    if: github.event_name == 'release' && github.event.action == 'published'
 
     steps:
       - uses: actions/setup-python@v4

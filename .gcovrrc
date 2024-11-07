@@ -1,0 +1,13 @@
+filter = native/
+#html-details = yes
+#html-self-contained = yes
+#html-single-page = js-enabled
+#lcov = yes
+#output = build/coverage-cpp.info
+txt-summary = yes
+
+exclude-throw-branches = yes
+exclude-unreachable-branches = yes
+decisions = yes
+
+fail-under-line = 80

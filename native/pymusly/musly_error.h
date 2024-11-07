@@ -5,6 +5,8 @@
 #include <pybind11/pybind11.h>
 #include <string>
 
+namespace pymusly {
+
 class musly_error : public std::exception {
 public:
     static void register_with_module(pybind11::module_& module)
@@ -31,5 +33,7 @@ public:
 private:
     std::string m_message;
 };
+
+} // namespace pymusly
 
 #endif // !PYMUSLY_MUSLY_ERROR_H_

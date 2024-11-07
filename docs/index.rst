@@ -9,16 +9,15 @@ Usage
 
 ..  toctree::
     :caption: Usage
-    :hidden:
 
     usage/installation
+    usage/example
 
 API
 ---
 
 .. toctree::
    :caption: API
-   :hidden:
 
    api/functions
    api/MuslyJukebox

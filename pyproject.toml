@@ -32,14 +32,17 @@ Repository = "https://github.com/andban/pymusly.git"
 Issues = "https://github.com/andban/pymusly/issues"
 
 [project.optional-dependencies]
-docs = [
-    "sphinx ~= 7.4.7"
+doc = [
+    "sphinx >= 7.4.7,< 8.2.0"
 ]
-lint = [
-    "ruff ~= 0.6.9"
-]
-test = [
-    "pytest-cov ~= 5.0.0"
+dev = [
+    "cmakelang >= 0.6.13,< 0.7.0",
+    "gcovr >= 8.2,< 8.3",
+    "pytest >= 8.3.3,< 8.4.0",
+    "pytest-cov >= 6.0,< 6.1",
+    "pytest-mock >= 3.14.0,< 3.15.0",
+    "PyYAML >= 6.0.2,< 6.1.0", # needed to load cmake-format config
+    "ruff >= 0.6.9,< 0.8.0 ",
 ]
 
 [tool.scikit-build]
@@ -48,14 +51,6 @@ wheel.packages = ["src/pymusly"]
 minimum-version = "build-system.requires"
 cmake.source-dir = "native"
 build.verbose = true
-wheel.exclude = [
-    # cmake on manylinux can't help itself to install all that crap
-    "include",
-    "lib64",
-    "lib",
-    "bin",
-    "share"
-]
 
 [tool.cibuildwheel]
 manylinux-x86_64-image = "manylinux_2_28"
@@ -69,13 +64,5 @@ addopts = [
     "-ra",
     "--showlocals",
     "--strict-markers",
-    "--strict-config"
-]
-xfail_strict = true
-filterwarnings = [
-    "error",
-    "ignore::pytest.PytestCacheWarning"
-]
-testpaths = [
-    "tests"
+    "--strict-config",
 ]
