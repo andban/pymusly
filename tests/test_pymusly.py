@@ -3,7 +3,7 @@ from tests.helper import is_windows_platform, is_macos_platform
 
 
 def test_version():
-    assert m.__version__ == "1.0.1"
+    assert m.__version__ == "1.0.2"
 
 
 def test_get_musly_version():

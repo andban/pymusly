@@ -23,7 +23,7 @@ format:
 	cmake-format -i native/**/CMakeLists.txt
 
 tests:
-	@command -v pytest >/dev/null || python -m pip install -v '.[dev]'
+	@python -m pip install -v '.[dev]'
 	python -m pytest --cov=pymusly
 
 coverage:
