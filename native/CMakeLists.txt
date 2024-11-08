@@ -40,8 +40,8 @@ set(MUSLY_USE_OWN_LIBRESAMPLE TRUE)
 set(MUSLY_USE_OWN_LIBKISSFFT TRUE)
 FetchContent_Declare(
   Musly
-  GIT_REPOSITORY https://github.com/andban/musly.git
-  GIT_TAG v2.0-cmake.3
+  URL https://github.com/andban/musly/archive/refs/tags/v2.0-cmake.5.tar.gz
+  URL_HASH SHA256=82e0b4a178a5064b4d4dcd0cfc82d25e78b49820b6ca9ba7003d56e097bf6cc6
   DOWNLOAD_EXTRACT_TIMESTAMP TRUE
       CMAKE_ARGS -DCMAKE_INTERPROCEDURAL_OPTIMIZATIONS=OFF EXCLUDE_FROM_ALL FIND_PACKAGE_ARGS
 )
