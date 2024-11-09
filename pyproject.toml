@@ -8,7 +8,7 @@ build-backend = "scikit_build_core.build"
 
 [project]
 name = "pymusly"
-version = "1.0.2"
+version = "1.0.3"
 description = "Python bindings to libmusly for performing music similarity computation."
 readme = "README.md"
 license = { file = "LICENSE.txt" }
