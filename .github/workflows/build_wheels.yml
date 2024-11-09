@@ -48,30 +48,6 @@ jobs:
           choco install ninja
           echo "CMAKE_GENERATOR=Ninja" >> "$GITHUB_ENV"
 
-      - name: Pre-build libmusly
-        shell: bash
-        run: |
-          curl -SL https://github.com/andban/musly/archive/refs/tags/v2.0-cmake.2.zip -o $RUNNER_TEMP/musly.zip
-          cd $RUNNER_TEMP
-          unzip musly.zip
-          cd musly-2.0-cmake.2
-          cmake -S . -B build -DMUSLY_USE_OWN_LIBRESAMPLE=TRUE -DMUSLY_USE_OWN_LIBKISSFFT=TRUE -DCMAKE_OSX_DEPLOYMENT_TARGET=11.0
-          cmake --build build --config Release
-
-      - name: Install libmusly
-        shell: bash
-        if: ${{ matrix.os != 'windows-latest' }}
-        run: |
-          cd $RUNNER_TEMP/musly-2.0-cmake.2
-          sudo cmake --install build
-
-      - name: Install libmusly
-        shell: bash
-        if: ${{ matrix.os == 'windows-latest' }}
-        run: |
-          cd $RUNNER_TEMP/musly-2.0-cmake.2
-          cmake --install build
-
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.21.3
         env:
