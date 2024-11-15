@@ -13,7 +13,7 @@ from ._pymusly import (
     MuslyError,
 )
 
-from .ffmpeg_decode import _duration_with_ffprobe, _decode_with_ffmpeg, _ffmpeg_present
+from .ffmpeg_decode import _duration_with_ffprobe, _decode_with_ffmpeg, is_ffmpeg_present
 
 __doc__ = """
     Python binding for the libmusly music similarity computation library.
@@ -61,7 +61,7 @@ class MuslyJukebox(_OriginalMuslyJukebox):
                 self, filename, length, start
             )
 
-        if not _ffmpeg_present():
+        if not is_ffmpeg_present():
             raise MuslyError("jukebox has no decoder and no ffmpeg/avconv tools found")
 
         duration = _duration_with_ffprobe(filename)
@@ -88,4 +88,5 @@ __all__ = [
     "MuslyJukebox",
     "MuslyTrack",
     "MuslyError",
+    "is_ffmpeg_present"
 ]

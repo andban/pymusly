@@ -171,7 +171,7 @@ def _duration_with_ffprobe(filename: str):
     return float(match.group("duration"))
 
 
-def _ffmpeg_present():
+def is_ffmpeg_present():
     try:
         result = _run_avprobe(["-version"], capture_output=True, text=True)
     except Exception:
