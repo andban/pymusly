@@ -6,7 +6,7 @@ from unittest.mock import patch
 import pytest
 
 import pymusly as m
-from pymusly import _ffmpeg_present
+from pymusly import is_ffmpeg_present
 
 from tests.helper import (
     is_linux_platform,
@@ -267,7 +267,7 @@ def test_track_deserialization():
     assert similarity_before == similarity_after
 
 
-@pytest.mark.skipif(not _ffmpeg_present(), reason="no ffmpeg binaries installed")
+@pytest.mark.skipif(not is_ffmpeg_present(), reason="no ffmpeg binaries installed")
 @pytest.mark.parametrize(
     "start,length",
     [
