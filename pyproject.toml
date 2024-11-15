@@ -52,12 +52,6 @@ minimum-version = "build-system.requires"
 cmake.source-dir = "native"
 build.verbose = true
 
-[tool.cibuildwheel.linux]
-archs = "auto aarch64"
-
-[tool.cibuildwheel.macos]
-archs = "x86_64 universal2"
-
 [tool.pytest.ini_options]
 minversion = 8.0
 addopts = [

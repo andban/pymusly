@@ -52,8 +52,8 @@ jobs:
         uses: pypa/cibuildwheel@v2.21.3
         env:
           CIBW_SKIP: pp* *-musllinux*
-          CIBW_ARCHS_MACOS: auto
-          CIBW_ARCHS_LINUX: x86_64
+          CIBW_ARCHS_MACOS: x86_64 universal2
+          CIBW_ARCHS_LINUX: x86_64 aarch64
           CIBW_ARCHS_WINDOWS: AMD64
           CIBW_ENVIRONMENT_WINDOWS: CMAKE_GENERATOR=Ninja
 
