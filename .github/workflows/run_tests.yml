@@ -4,9 +4,19 @@ on:
   push:
     branches:
       - main
+    paths:
+      - "src/**"
+      - "native/**"
+      - ".github/workflows/build_tests.yml"
+      - "pyproject.toml"
   pull_request:
     branches:
       - main
+    paths:
+      - "src/**"
+      - "native/**"
+      - ".github/workflows/build_tests.yml"
+      - "pyproject.toml"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}

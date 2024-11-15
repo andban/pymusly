@@ -9,6 +9,7 @@ on:
       - "src/**"
       - "native/**"
       - ".github/workflows/build_wheels.yml"
+      - "pyproject.toml"
   release:
     types:
       - published
@@ -47,6 +48,12 @@ jobs:
         run: |
           choco install ninja
           echo "CMAKE_GENERATOR=Ninja" >> "$GITHUB_ENV"
+
+      - name: Setup QEMU
+        if: ${{ matrix.os == 'ubuntu-latest' }}
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: arm64
 
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.21.3
