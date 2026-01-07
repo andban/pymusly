@@ -7,7 +7,7 @@ def test_version():
 
 
 def test_get_musly_version():
-    assert m.get_musly_version() == "0.2"
+    assert m.get_musly_version() == "2.0.0"
 
 
 def test_get_musly_decoders():
