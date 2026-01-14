@@ -63,7 +63,6 @@ addopts = [
 
 
 [tool.cibuildwheel]
-enable = []
 skip = "*-musllinux*"
 manylinux-x86_64-image = "manylinux_2_34"
 manylinux-aarch64-image = "manylinux_2_34"
