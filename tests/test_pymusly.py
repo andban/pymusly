@@ -18,7 +18,7 @@ def test_get_musly_decoders():
     elif is_macos_platform():
         assert "coreaudio" in decoders
     else:
-        assert "avlib" in decoders or not decoders
+        assert "libav" in decoders or not decoders
 
 def test_get_musly_methods():
     assert m.get_musly_methods() == ["mandelellis", "timbre"]

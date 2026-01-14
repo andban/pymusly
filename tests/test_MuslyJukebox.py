@@ -17,7 +17,7 @@ from tests.helper import (
 
 def get_default_decoder():
     if is_linux_platform():
-        return None
+        return "libav"
     elif is_macos_platform():
         return "coreaudio"
     elif is_windows_platform():
@@ -33,7 +33,7 @@ def test_init():
     jukebox = m.MuslyJukebox()
 
     assert jukebox.method == expected_method
-    assert jukebox.decoder == expected_decoder or None
+    assert jukebox.decoder == expected_decoder
 
 
 def test_init_parameters():
