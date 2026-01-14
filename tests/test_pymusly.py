@@ -20,5 +20,6 @@ def test_get_musly_decoders():
     else:
         assert "libav" in decoders or not decoders
 
+
 def test_get_musly_methods():
     assert m.get_musly_methods() == ["mandelellis", "timbre"]

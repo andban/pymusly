@@ -1,7 +1,6 @@
 import io
 import platform
 import random
-from unittest.mock import patch
 
 import pytest
 
@@ -42,6 +41,7 @@ def test_init_parameters():
     jukebox = m.MuslyJukebox(method=expected_method)
 
     assert jukebox.method == expected_method
+
 
 def test_init_invalid():
     expected_method = "bruteforce"

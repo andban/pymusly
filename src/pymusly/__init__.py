@@ -31,6 +31,7 @@ def get_musly_decoders() -> List[str]:
 
     return decoders.split(sep=",") if len(decoders) else []
 
+
 __all__ = [
     "__doc__",
     "__version__",
@@ -40,5 +41,5 @@ __all__ = [
     "get_musly_decoders",
     "MuslyJukebox",
     "MuslyTrack",
-    "MuslyError"
+    "MuslyError",
 ]
