@@ -60,3 +60,25 @@ addopts = [
     "--strict-markers",
     "--strict-config",
 ]
+
+
+[tool.cibuildwheel]
+enable = []
+skip = "*-musllinux*"
+manylinux-x86_64-image = "manylinux_2_34"
+manylinux-aarch64-image = "manylinux_2_34"
+
+[tool.cibuildwheel.linux]
+archs = "aarch64 x86_64"
+before-build = """
+dnf update -y
+dnf install -y libavcodec-free-devel libavformat-free-devel libavutil-free-devel libswresample-free-devel
+"""
+
+[tool.cibuildwheel.macos]
+archs = "x86_64 universal2"
+
+[tool.cibuildwheel.windows]
+archs = "AMD64"
+environment = { "CMAKE_GENERATOR" = "Ninja"  }
+
