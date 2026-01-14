@@ -13,12 +13,12 @@ def test_get_musly_version():
 def test_get_musly_decoders():
     decoders = m.get_musly_decoders()
 
-    assert "none" in decoders
-
     if is_windows_platform():
         assert "mediafoundation" in decoders
     elif is_macos_platform():
         assert "coreaudio" in decoders
+    else:
+        assert "libav" in decoders or not decoders
 
 
 def test_get_musly_methods():

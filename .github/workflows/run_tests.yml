@@ -42,12 +42,11 @@ jobs:
       - name: Prepare Linux
         if: ${{ matrix.platform == 'ubuntu-latest' }}
         run: |
-          sudo apt install ffmpeg
+          sudo apt install libavcodec-dev libavformat-dev libavutil-dev libswresample-dev libeigen3-dev
 
       - name: Prepare MacOS
         if: ${{ matrix.platform == 'macos-latest' }}
         run: |
-          brew install ffmpeg@6
           echo "/opt/homebrew/opt/ffmpeg@6/bin" >> $GITHUB_PATH
 
 
@@ -55,7 +54,7 @@ jobs:
         if: ${{ matrix.platform == 'windows-latest' }}
         shell: bash
         run: |
-          choco install ninja ffmpeg
+          choco install ninja
           echo "CMAKE_GENERATOR=Ninja" >> "$GITHUB_ENV"
 
       - name: Install dependencies
