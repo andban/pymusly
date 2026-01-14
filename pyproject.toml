@@ -64,14 +64,14 @@ addopts = [
 
 [tool.cibuildwheel]
 skip = "*-musllinux*"
-manylinux-x86_64-image = "manylinux_2_34"
-manylinux-aarch64-image = "manylinux_2_34"
+manylinux-x86_64-image = "quay.io/pypa/manylinux_2_28_x86_64"
+manylinux-aarch64-image = "quay.io/pypa/manylinux_2_28_aarch64"
 
 [tool.cibuildwheel.linux]
 archs = "aarch64 x86_64"
 before-build = """
-dnf update -y
-dnf install -y libavcodec-free-devel libavformat-free-devel libavutil-free-devel libswresample-free-devel
+dnf install -y --nogpgcheck https://mirrors.rpmfusion.org/free/el/rpmfusion-free-release-8.noarch.rpm
+dnf install -y ffmpeg-devel
 """
 
 [tool.cibuildwheel.macos]
