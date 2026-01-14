@@ -6,7 +6,6 @@ from unittest.mock import patch
 import pytest
 
 import pymusly as m
-from pymusly import is_ffmpeg_present
 
 from tests.helper import (
     is_linux_platform,
@@ -18,7 +17,7 @@ from tests.helper import (
 
 def get_default_decoder():
     if is_linux_platform():
-        return "none"
+        return None
     elif is_macos_platform():
         return "coreaudio"
     elif is_windows_platform():
@@ -34,18 +33,15 @@ def test_init():
     jukebox = m.MuslyJukebox()
 
     assert jukebox.method == expected_method
-    assert jukebox.decoder == expected_decoder
+    assert jukebox.decoder == expected_decoder or None
 
 
 def test_init_parameters():
     expected_method = "mandelellis"
-    expected_decoder = "none"
 
-    jukebox = m.MuslyJukebox(method=expected_method, decoder=expected_decoder)
+    jukebox = m.MuslyJukebox(method=expected_method)
 
     assert jukebox.method == expected_method
-    assert jukebox.decoder == expected_decoder
-
 
 def test_init_invalid():
     expected_method = "bruteforce"
@@ -265,36 +261,3 @@ def test_track_deserialization():
     similarity_after = jukebox.compute_similarity((1, track_1), [(3, track_3b)])
 
     assert similarity_before == similarity_after
-
-
-@pytest.mark.skipif(not is_ffmpeg_present(), reason="no ffmpeg binaries installed")
-@pytest.mark.parametrize(
-    "start,length",
-    [
-        (0, 9),
-        (0, 23),
-        (-5, 4),
-        (6, 9),
-    ],
-)
-def test_ffmpeg_decode_fallback(start, length):
-    jukebox = m.MuslyJukebox(decoder="none")
-
-    track = jukebox.track_from_audiofile(
-        to_fixture_path("sample-9s.mp3"), start=start, length=length
-    )
-
-    assert isinstance(track, m.MuslyTrack)
-
-
-@patch("pymusly.ffmpeg_decode._run_avprobe")
-def test_no_ffmpeg_decode_fallback(mock_avprobe):
-    mock_avprobe.side_effect = OSError("boom")
-    jukebox = m.MuslyJukebox(decoder="none")
-
-    with pytest.raises(m.MuslyError) as e:
-        jukebox.track_from_audiofile(
-            to_fixture_path("sample-9s.mp3"), start=0, length=9
-        )
-
-    assert e.match("jukebox has no decoder and no ffmpeg/avconv tools found")

@@ -59,11 +59,6 @@ if(DEFINED musly_SOURCE_DIR AND ${SKBUILD_STATE} STREQUAL "wheel")
     RENAME LICENSE.musly.txt
   )
   install(
-    FILES ${musly_SOURCE_DIR}/libresample/LICENSE-BSD.txt
-    DESTINATION ${SKBUILD_METADATA_DIR}/licenses
-    RENAME LICENSE.resample.txt
-  )
-  install(
     FILES ${musly_SOURCE_DIR}/libkissfft/COPYING
     DESTINATION ${SKBUILD_METADATA_DIR}/licenses
     RENAME LICENSE.kissfft.txt

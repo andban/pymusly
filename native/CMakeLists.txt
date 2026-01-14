@@ -36,12 +36,11 @@ include(FetchContent)
 find_package(Python REQUIRED COMPONENTS Interpreter Development.Module)
 find_package(pybind11 CONFIG REQUIRED)
 
-set(MUSLY_USE_OWN_LIBRESAMPLE TRUE)
 set(MUSLY_USE_OWN_LIBKISSFFT TRUE)
 FetchContent_Declare(
   Musly
-  URL https://github.com/andban/musly/archive/refs/tags/v2.0-cmake.6.tar.gz
-  URL_HASH SHA256=223208b5e64075c92d09163b8293905d6bd517ee31e26c98e492679936a711f1
+  URL https://github.com/andban/musly/archive/refs/tags/v2.0-cmake.7.tar.gz
+  URL_HASH SHA256=a83ea5ac75f1751f6211a47d4e1878222252d0a82310d4ce2bbae8946365945f
   DOWNLOAD_EXTRACT_TIMESTAMP TRUE
       CMAKE_ARGS -DCMAKE_INTERPROCEDURAL_OPTIMIZATIONS=OFF EXCLUDE_FROM_ALL FIND_PACKAGE_ARGS
 )
