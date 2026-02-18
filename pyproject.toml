@@ -42,7 +42,7 @@ dev = [
     "pytest-cov >= 7.0,< 7.1",
     "pytest-mock >= 3.14.0,< 3.16.0",
     "PyYAML >= 6.0.2,< 6.1.0", # needed to load cmake-format config
-    "ruff >= 0.6.9,< 0.15.0 ",
+    "ruff >= 0.6.9,< 0.16.0 ",
 ]
 
 [tool.scikit-build]
